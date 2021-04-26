@@ -50,3 +50,5 @@ maintainers:
   name: dingyuan
 
 icon: https://xenondb.pek3b.qingstor.com/icons/XenonDB-shape.svg
+annotations:
+  "app.kubesphere.io/category": "Database & Cache"
