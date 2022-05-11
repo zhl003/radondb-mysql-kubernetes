@@ -39,7 +39,7 @@ jobs:
         with:
           push: true
           file: Dockerfile.sidecar
-          tags: zhl003/${{ matrix.version }}-sidecar:${{ inputs.image_tag }}
+          tags: zhonghl003/${{ matrix.version }}-sidecar:${{ inputs.image_tag }}
 
       - name: Build and push mysql80 sidecar
         uses: docker/build-push-action@v2
@@ -47,5 +47,5 @@ jobs:
         with:
           push: true
           file: Dockerfile.sidecar
-          tags: zhl003/${{ matrix.version }}-sidecar:${{ inputs.image_tag }}
+          tags: zhonghl003/${{ matrix.version }}-sidecar:${{ inputs.image_tag }}
           build-args: XTRABACKUP_PKG=percona-xtrabackup-80
