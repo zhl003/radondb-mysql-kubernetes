@@ -36,8 +36,8 @@ jobs:
 
       - name: Update version
         run: |
-          sed -i '/^    sidecarImage: radondb\/mysql57-sidecar:*/c\    sidecarImage: radondb\/mysql57-sidecar:${{ steps.draft.outputs.tag_name }}' config/samples/mysql_v1alpha1_mysqlcluster.yaml
-          sed -i '/^    sidecarImage: radondb\/mysql80-sidecar:*/c\    sidecarImage: radondb\/mysql80-sidecar:${{ steps.draft.outputs.tag_name }}' config/samples/mysql_v1alpha1_mysqlcluster_mysql8.yaml
+          sed -i '/^    sidecarImage: zhl003\/mysql57-sidecar:*/c\    sidecarImage: zhl003\/mysql57-sidecar:${{ steps.draft.outputs.tag_name }}' config/samples/mysql_v1alpha1_mysqlcluster.yaml
+          sed -i '/^    sidecarImage: zhl003\/mysql80-sidecar:*/c\    sidecarImage: zhl003\/mysql80-sidecar:${{ steps.draft.outputs.tag_name }}' config/samples/mysql_v1alpha1_mysqlcluster_mysql8.yaml
 
       - name: Upload mysql57 sample yaml
         uses: actions/upload-release-asset@v1
