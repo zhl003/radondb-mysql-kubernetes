@@ -27,7 +27,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar
 ###############################################################################
 FROM ubuntu:bionic as xbbuilder
 ARG XB_VERSION=2.4.26
-RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
 build-essential flex bison automake autoconf \
 libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev \
 libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
