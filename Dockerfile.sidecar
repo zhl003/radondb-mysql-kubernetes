@@ -23,6 +23,22 @@ COPY utils/ utils/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar/main.go
 
 ###############################################################################
+#  Build Xtrabackup
+###############################################################################
+FROM ubuntu:bionic as xbbuilder
+ARG XB_VERSION=2.4.26
+RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev \
+build-essential flex bison automake autoconf \
+libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev \
+libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
+curl -O https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-${XB_VERSION}/source/tarball/percona-xtrabackup-${XB_VERSION}.tar.gz && \
+tar -xzf percona-xtrabackup-${XB_VERSION}.tar.gz && \
+cd percona-xtrabackup-${XB_VERSION} && \
+cmake -DWITH_BOOST=PATH-TO-BOOST-LIBRARY -DDOWNLOAD_BOOST=ON \
+-DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
+make -j2 && \
+make install 
+###############################################################################
 #  Docker image for Sidecar
 ###############################################################################
 FROM ubuntu:bionic
@@ -37,19 +53,12 @@ RUN set -ex; \
     --gid mysql \
     mysql;
 
-ARG XTRABACKUP_PKG=percona-xtrabackup-24
-RUN set -ex; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends gnupg2 wget lsb-release curl \
-    libaio1 libdbd-mysql-perl libdbi-perl libev4 libgdbm-compat4 libgdbm5 \
-    libmysqlclient20 libperl5.26 libpopt0 mysql-common netbase perl perl-modules-5.26 rsync \
-    ; \
-    wget -P /tmp --no-check-certificate http://launchpadlibrarian.net/358910761/percona-xtrabackup_2.4.9-0ubuntu2_arm64.deb; \
-    dpkg -i /tmp/percona-xtrabackup_2.4.9-0ubuntu2_arm64.deb; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends ${XTRABACKUP_PKG}; \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 WORKDIR /
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud_osenv /usr/bin/xbcloud_osenv
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xtrabackup /usr/bin/xtrabackup
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/innobackupex /usr/bin/innobackupex
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbstream /usr/bin/xbstream
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcrypt /usr/bin/xbcrypt
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud /usr/bin/xbcloud
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 ENTRYPOINT ["sidecar"]
