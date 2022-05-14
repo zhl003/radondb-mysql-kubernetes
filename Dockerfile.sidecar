@@ -27,6 +27,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar
 ###############################################################################
 FROM ubuntu:bionic as xbbuilder
 ARG XB_VERSION=2.4.26
+ARG HTTPPROY
+ENV http_proxy=${HTTPPROY}
 ADD percona-xtrabackup-${XB_VERSION}.tar.gz /
 RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
 build-essential flex bison automake autoconf \
