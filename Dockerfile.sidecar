@@ -57,9 +57,8 @@ RUN set -ex; \
     mysql;
 
 WORKDIR /
-ADD xtrabackup57.tgz /tmp/
-RUN tar -xzvf /tmp/xtrabackup57.tgz -C /usr/bin/xtrabackup57 && chmod +x /usr/bin/xtrabackup57  && rm -rf /tmp/xtrabackup57.tgz
-ENV PATH=/usr/bin/xtrabackup57/bin:$PATH
+ADD xtrabackup.tgz /usr/
+RUN apt-get update && apt-get install -y --no-install-recommends  openssl libaio1 libaio-dev
 # COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud_osenv /usr/bin/xbcloud_osenv
 # COPY --from=xbbuilder /usr/local/xtrabackup/bin/xtrabackup /usr/bin/xtrabackup
 # COPY --from=xbbuilder /usr/local/xtrabackup/bin/innobackupex /usr/bin/innobackupex
