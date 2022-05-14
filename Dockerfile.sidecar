@@ -25,22 +25,22 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar
 ###############################################################################
 #  Build Xtrabackup
 ###############################################################################
-FROM ubuntu:bionic as xbbuilder
-ARG XB_VERSION=2.4.26
-ARG HTTPPROY
-RUN  sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
-RUN  apt-get clean
-ENV http_proxy=${HTTPPROY}
-ADD percona-xtrabackup-${XB_VERSION}.tar.gz /
-RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
-build-essential flex bison automake autoconf \
-libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev \
-libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
-cd percona-xtrabackup-${XB_VERSION} && mkdir build && cd build &&\
-cmake -DWITH_BOOST=PATH-TO-BOOST-LIBRARY -DDOWNLOAD_BOOST=ON \
--DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
-make -j2 && \
-make install 
+# FROM ubuntu:bionic as xbbuilder
+# ARG XB_VERSION=2.4.26
+# ARG HTTPPROY
+# RUN  sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+# RUN  apt-get clean
+# ENV http_proxy=${HTTPPROY}
+# ADD percona-xtrabackup-${XB_VERSION}.tar.gz /
+# RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
+# build-essential flex bison automake autoconf \
+# libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev \
+# libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
+# cd percona-xtrabackup-${XB_VERSION} && mkdir build && cd build &&\
+# cmake -DWITH_BOOST=PATH-TO-BOOST-LIBRARY -DDOWNLOAD_BOOST=ON \
+# -DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
+# make -j2 && \
+# make install 
 ###############################################################################
 #  Docker image for Sidecar
 ###############################################################################
@@ -57,11 +57,14 @@ RUN set -ex; \
     mysql;
 
 WORKDIR /
-COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud_osenv /usr/bin/xbcloud_osenv
-COPY --from=xbbuilder /usr/local/xtrabackup/bin/xtrabackup /usr/bin/xtrabackup
-COPY --from=xbbuilder /usr/local/xtrabackup/bin/innobackupex /usr/bin/innobackupex
-COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbstream /usr/bin/xbstream
-COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcrypt /usr/bin/xbcrypt
-COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud /usr/bin/xbcloud
-COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+ADD xtrabackup57.tgz /usr/bin
+RUN chmod +x /usr/bin/xtrabackup57 
+ENV PATH=/usr/bin/xtrabackup57/bin:$PATH
+# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud_osenv /usr/bin/xbcloud_osenv
+# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xtrabackup /usr/bin/xtrabackup
+# COPY --from=xbbuilder /usr/local/xtrabackup/bin/innobackupex /usr/bin/innobackupex
+# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbstream /usr/bin/xbstream
+# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcrypt /usr/bin/xbcrypt
+# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud /usr/bin/xbcloud
+# COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 ENTRYPOINT ["sidecar"]
