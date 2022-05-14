@@ -27,12 +27,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar
 ###############################################################################
 FROM ubuntu:bionic as xbbuilder
 ARG XB_VERSION=2.4.26
+ADD percona-xtrabackup-${XB_VERSION}.tar.gz /
 RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
 build-essential flex bison automake autoconf \
 libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev \
 libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
-curl -O https://downloads.percona.com/downloads/Percona-XtraBackup-2.4/Percona-XtraBackup-${XB_VERSION}/source/tarball/percona-xtrabackup-${XB_VERSION}.tar.gz && \
-tar -xzf percona-xtrabackup-${XB_VERSION}.tar.gz && \
 cd percona-xtrabackup-${XB_VERSION} && \
 cmake -DWITH_BOOST=PATH-TO-BOOST-LIBRARY -DDOWNLOAD_BOOST=ON \
 -DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
