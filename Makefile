@@ -71,7 +71,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 
 docker-build: test ## Build docker image with the manager.
 	docker build -t ${IMG} .
-	docker build -f Dockerfile.sidecar -t ${SIDECAR_IMG} .
+	docker build --build-arg HTTPPROY=$(http_proxy) -f Dockerfile.sidecar -t ${SIDECAR_IMG} .
 	docker build -f hack/xenon/Dockerfile -t ${XENON_IMG} hack/xenon
 mysql8-sidecar:
 	docker build --build-arg XTRABACKUP_PKG=percona-xtrabackup-80  -f  Dockerfile.sidecar -t ${SIDECAR_IMG} .
