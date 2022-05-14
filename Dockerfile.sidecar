@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-de
 build-essential flex bison automake autoconf \
 libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev \
 libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
-cd percona-xtrabackup-${XB_VERSION} && mkdir build && cd build \
+cd percona-xtrabackup-${XB_VERSION} && mkdir build && cd build &&\
 cmake -DWITH_BOOST=PATH-TO-BOOST-LIBRARY -DDOWNLOAD_BOOST=ON \
 -DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
 make -j2 && \
