@@ -28,6 +28,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar
 FROM ubuntu:bionic as xbbuilder
 ARG XB_VERSION=2.4.26
 ARG HTTPPROY
+RUN  sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
+RUN  apt-get clean
 ENV http_proxy=${HTTPPROY}
 ADD percona-xtrabackup-${XB_VERSION}.tar.gz /
 RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
