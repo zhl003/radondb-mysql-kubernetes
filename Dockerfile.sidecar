@@ -65,5 +65,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends  openssl libaio
 # COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbstream /usr/bin/xbstream
 # COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcrypt /usr/bin/xbcrypt
 # COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud /usr/bin/xbcloud
-# COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 ENTRYPOINT ["sidecar"]
