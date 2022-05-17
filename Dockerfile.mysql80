@@ -106,7 +106,7 @@ RUN set -eux; \
 	mysqlsh --version
 
 VOLUME /var/lib/mysql
-
+ADD audit_log.so /usr/lib64/mysql/plugin/
 COPY ps-entry.sh /docker-entrypoint.sh
 COPY ps-admin  /usr/bin/ps-admin
 ENTRYPOINT ["/docker-entrypoint.sh"]
