@@ -62,7 +62,7 @@ RUN set -eu; \
 		echo 'name=MySQL 8.0 Server Minimal'; \
 		echo 'enabled=1'; \
 		echo "baseurl=https://repo.mysql.com/yum/mysql-8.0-community/docker/el/${VERSION_ID%%[.-]*}/\$basearch/"; \
-		echo 'gpgcheck=1'; \
+		echo 'gpgcheck=0'; \
 		echo 'gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-mysql'; \
 # https://github.com/docker-library/mysql/pull/680#issuecomment-825930524
 		echo 'module_hotfixes=true'; \
