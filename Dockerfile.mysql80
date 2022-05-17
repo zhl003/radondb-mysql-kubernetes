@@ -100,7 +100,8 @@ RUN set -eu; \
 	} | tee /etc/yum.repos.d/mysql-community-tools.repo
 ENV MYSQL_SHELL_VERSION 8.0.29-1.el8
 RUN set -eux; \
-	microdnf install -y "mysql-shell-$MYSQL_SHELL_VERSION"; \
+	microdnf install -y "mysql-shell-$MYSQL_SHELL_VERSION" \
+    procps-ng; \
 	microdnf clean all; \
 	\
 	mysqlsh --version
