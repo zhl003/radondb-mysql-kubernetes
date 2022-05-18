@@ -20,27 +20,25 @@ COPY sidecar/ sidecar/
 COPY utils/ utils/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o bin/sidecar cmd/sidecar/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -o bin/sidecar cmd/sidecar/main.go
 
 ###############################################################################
 #  Build Xtrabackup
 ###############################################################################
-# FROM ubuntu:bionic as xbbuilder
-# ARG XB_VERSION=2.4.26
-# ARG HTTPPROY
-# RUN  sed -i s@/archive.ubuntu.com/@/mirrors.aliyun.com/@g /etc/apt/sources.list
-# RUN  apt-get clean
-# ENV http_proxy=${HTTPPROY}
-# ADD percona-xtrabackup-${XB_VERSION}.tar.gz /
-# RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
-# build-essential flex bison automake autoconf \
-# libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev \
-# libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
-# cd percona-xtrabackup-${XB_VERSION} && mkdir build && cd build &&\
-# cmake -DWITH_BOOST=PATH-TO-BOOST-LIBRARY -DDOWNLOAD_BOOST=ON \
-# -DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
-# make -j2 && \
-# make install 
+FROM ubuntu:bionic as xbbuilder
+ARG XB_VERSION=8.0.28-20
+RUN  apt-get clean
+RUN apt-get update && apt-get install -y --no-install-recommends  curl libssl-dev ca-certificates \
+build-essential flex bison automake autoconf \
+libtool cmake libaio-dev mysql-client libncurses-dev zlib1g-dev gcc-8 g++-8 \
+libgcrypt11-dev libev-dev libcurl4-gnutls-dev vim-common; \
+curl -LO https://downloads.percona.com/downloads/Percona-XtraBackup-8.0/Percona-XtraBackup-${XB_VERSION}/source/tarball/percona-xtrabackup-${XB_VERSION}.tar.gz ; \
+tar -xzf percona-xtrabackup-${XB_VERSION}.tar.gz; \
+cd percona-xtrabackup-${XB_VERSION} && mkdir build && cd build &&\
+cmake -DWITH_BOOST=/tmp -DDOWNLOAD_BOOST=ON \
+-DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
+make -j6 && \
+make install 
 ###############################################################################
 #  Docker image for Sidecar
 ###############################################################################
@@ -57,13 +55,15 @@ RUN set -ex; \
     mysql;
 
 WORKDIR /
-ADD xtrabackup.tgz /usr/
-RUN apt-get update && apt-get install -y --no-install-recommends  openssl libaio1 libaio-dev
-# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud_osenv /usr/bin/xbcloud_osenv
-# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xtrabackup /usr/bin/xtrabackup
-# COPY --from=xbbuilder /usr/local/xtrabackup/bin/innobackupex /usr/bin/innobackupex
-# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbstream /usr/bin/xbstream
-# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcrypt /usr/bin/xbcrypt
-# COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud /usr/bin/xbcloud
+RUN apt-get update && apt-get install -y --no-install-recommends  openssl libaio1 libaio-dev libprotobuf-dev \
+libcurl4-gnutls-dev libev-dev
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud_osenv /usr/bin/xbcloud_osenv
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xtrabackup /usr/bin/xtrabackup
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbstream /usr/bin/xbstream
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcrypt /usr/bin/xbcrypt
+COPY --from=xbbuilder /usr/local/xtrabackup/bin/xbcloud /usr/bin/xbcloud
+COPY --from=xbbuilder /usr/local/xtrabackup/lib/private/libprotobuf-lite.so.3.11.4 /usr/lib/libprotobuf-lite.so.3.11.4
+COPY --from=xbbuilder /usr/local/xtrabackup/lib/private/libprotobuf.so.3.11.4 /usr/lib/libprotobuf.so.3.11.4
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+RUN ln -s /usr/bin/xtrabackup /usr/bin/innobackupex
 ENTRYPOINT ["sidecar"]
