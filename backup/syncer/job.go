@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
 	"github.com/radondb/radondb-mysql-kubernetes/backup"
@@ -33,12 +32,13 @@ import (
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
-var log = logf.Log.WithName("backup.syncer.job")
-
 type jobSyncer struct {
 	job    *batchv1.Job
 	backup *backup.Backup
 }
+
+// Owner returns the object owner or nil if object does not have one.
+func (s *jobSyncer) ObjectOwner() runtime.Object { return s.backup.Unwrap() }
 
 // NewJobSyncer returns a syncer for backup jobs
 func NewJobSyncer(c client.Client, s *runtime.Scheme, backup *backup.Backup) syncer.Interface {
@@ -59,7 +59,7 @@ func NewJobSyncer(c client.Client, s *runtime.Scheme, backup *backup.Backup) syn
 
 func (s *jobSyncer) SyncFn() error {
 	if s.backup.Status.Completed {
-		log.V(1).Info("backup already completed", "backup", s.backup)
+		s.backup.Log.V(1).Info("backup already completed", "backup", s.backup)
 		// skip doing anything
 		return syncer.ErrIgnore
 	}
@@ -86,6 +86,15 @@ func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 		if cond.Status == corev1.ConditionTrue {
 			s.backup.Status.Completed = true
 		}
+		if backupName := s.job.Annotations[utils.JobAnonationName]; backupName != "" {
+			s.backup.Status.BackupName = backupName
+		}
+		if backDate := s.job.Annotations[utils.JobAnonationDate]; backDate != "" {
+			s.backup.Status.BackupDate = backDate
+		}
+		if backType := s.job.Annotations[utils.JobAnonationType]; backType != "" {
+			s.backup.Status.BackupType = backType
+		}
 	}
 
 	// check for failed condition
@@ -95,6 +104,7 @@ func (s *jobSyncer) updateStatus(job *batchv1.Job) {
 			s.backup.Status.Completed = true
 		}
 	}
+
 }
 
 func jobCondition(condType batchv1.JobConditionType, job *batchv1.Job) *batchv1.JobCondition {
@@ -116,7 +126,7 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 	sctName := fmt.Sprintf("%s-secret", s.backup.Spec.ClusterName)
 	in.Containers[0].Name = utils.ContainerBackupName
 	in.Containers[0].Image = fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), s.backup.Spec.Image)
-
+	in.ServiceAccountName = s.backup.Spec.ClusterName
 	if len(s.backup.Spec.NFSServerAddress) != 0 {
 		// add volumn about pvc
 		in.Volumes = []corev1.Volume{
@@ -134,10 +144,15 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 		in.Containers[0].Command = []string{
 			"/bin/bash", "-c", "--",
 		}
-		var backupToDir string = utils.BuildBackupName(s.backup.Spec.ClusterName)
+		backupToDir, DateTime := utils.BuildBackupName(s.backup.Spec.ClusterName)
+		strAnnonations := fmt.Sprintf(`curl -X PATCH -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" -H "Content-Type: application/json-patch+json" \
+		--cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_PORT_443_TCP_PORT/apis/batch/v1/namespaces/%s/jobs/%s \
+		 -d '[{"op": "add", "path": "/metadata/annotations/backupName", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupDate", "value": "%s"}, {"op": "add", "path": "/metadata/annotations/backupType", "value": "NFS"}]';`,
+			s.backup.Namespace, s.backup.GetNameForJob(), backupToDir, DateTime)
 		in.Containers[0].Args = []string{
 			fmt.Sprintf("mkdir -p /backup/%s;"+
-				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s; exit ${PIPESTATUS[0]}",
+				"curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/%s;"+
+				strAnnonations+"exit ${PIPESTATUS[0]}",
 				backupToDir,
 				s.backup.GetBackupURL(s.backup.Spec.ClusterName, s.backup.Spec.HostName), backupToDir),
 		}
@@ -202,6 +217,11 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 					Optional: &optTrue,
 				},
 			},
+		},
+		// Cluster Name for set Anotations.
+		{
+			Name:  "JOB_NAME",
+			Value: s.job.Name,
 		},
 	}
 	return in
