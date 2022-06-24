@@ -356,7 +356,7 @@ fi
 # Check location for libjemalloc.so.1
 if [ ${ENABLE_TOKUDB} = 1 ]; then
   printf "Checking location of jemalloc library ...\n"
-  for libjemall in "${SCRIPT_PWD%/*}/lib/mysql" "/usr/lib64" "/usr/lib/x86_64-linux-gnu" "/usr/lib"; do
+  for libjemall in "${SCRIPT_PWD%/*}/lib/mysql" "/usr/lib64" "/usr/lib/aarch64-linux-gnu" "/usr/lib"; do
     if [ -r "${libjemall}/libjemalloc.so.1" ]; then
       JEMALLOC_LOCATION="${libjemall}/libjemalloc.so.1"
       break

@@ -40,7 +40,7 @@ spec:
         memory: 1Gi
 
   xenonOpts:
-    image: radondb/xenon:1.1.5-alpha
+    image: zhonghl003/xenon:1.1.5-alpha
     admitDefeatHearbeatCount: 5
     electionTimeout: 10000
 
@@ -54,7 +54,7 @@ spec:
 
   metricsOpts:
     enabled: false
-    image: prom/mysqld-exporter:v0.12.1
+    image: prom/mysqld-exporter:v0.14.1
 
     resources:
       requests:
@@ -66,7 +66,7 @@ spec:
 
   podPolicy:
     imagePullPolicy: IfNotPresent
-    sidecarImage: radondb/mysql57-sidecar:v2.2.0
+    sidecarImage: sidecar57
     busyboxImage: busybox:1.32
 
     slowLogTail: false

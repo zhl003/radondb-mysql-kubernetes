@@ -37,7 +37,7 @@ tar -xzf percona-xtrabackup-${XB_VERSION}.tar.gz; \
 cd percona-xtrabackup-${XB_VERSION} && mkdir build && cd build &&\
 cmake -DWITH_BOOST=/tmp -DDOWNLOAD_BOOST=ON \
 -DBUILD_CONFIG=xtrabackup_release -DWITH_MAN_PAGES=OFF -B .. && \
-make -j6 && \
+make -j3 && \
 make install 
 ###############################################################################
 #  Docker image for Sidecar

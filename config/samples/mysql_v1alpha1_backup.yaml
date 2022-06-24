@@ -1,10 +1,10 @@
 apiVersion: mysql.radondb.com/v1alpha1
 kind: Backup
 metadata:
-  name: backup-sample
+  name: sample-backup
 spec:
   # Add fields here
-  image: radondb/mysql57-sidecar:v2.2.0
+  image: zhonghl003/mysql57-sidecar:v2.2.1
   # hostname if empty, use the leader as hostname
   hostName: sample-mysql-0
   clusterName: sample

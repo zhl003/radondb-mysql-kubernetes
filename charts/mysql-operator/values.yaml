@@ -20,8 +20,8 @@ imagePrefix: ""
 tolerationSeconds: 30
 
 manager:
-  image: radondb/mysql-operator
-  tag: v2.2.0
+  image: operator
+  tag: latest
   enabledWebhooks: true
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
@@ -47,7 +47,7 @@ rbac:
 
 rbacProxy:
   create: true
-  image: radondb/kube-rbac-proxy:v0.8.0
+  image: zhonghl003/kube-rbac-proxy:v0.8.0
 
 leaderElection:
   create: true

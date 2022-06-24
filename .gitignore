@@ -26,4 +26,4 @@ bin/
 
 # e2e logs
 test/e2e/logs_*
-
+mysql57/

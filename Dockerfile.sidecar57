@@ -1,0 +1,47 @@
+##############################################################################
+#  Build Sidecar
+###############################################################################
+# Build the manager binary
+FROM golang:1.16 as builder
+
+WORKDIR /workspace
+# Copy the Go Modules manifests
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+# cache deps before building and copying source so that we don't need to re-download as much
+# and so that source changes don't invalidate our downloaded layer
+RUN go mod download
+
+# Copy the go source
+COPY cmd/sidecar/main.go cmd/sidecar/main.go
+COPY sidecar/ sidecar/
+COPY utils/ utils/
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -o bin/sidecar cmd/sidecar/main.go
+
+###############################################################################
+#  Docker image for Sidecar
+###############################################################################
+FROM ubuntu:bionic
+
+RUN set -eux; \
+    groupadd --system --gid 1001 mysql; \
+    useradd --system --uid 1001 --gid 1001 --home-dir /var/lib/mysql --no-create-home mysql;\
+    mkdir /xb;
+
+WORKDIR /
+RUN set -eux; \
+    apt-get update ;\
+	apt-get update && apt-get install -y --no-install-recommends  openssl libaio1 libaio-dev libprotobuf-dev \
+libcurl4-gnutls-dev libev-dev
+ADD  mysql5.7/xb26.tgz /xb
+RUN chown mysql.mysql /xb;\
+    cd xb;\
+    cp -rp bin/* /usr/bin/ ;\
+    cp -rp lib/* /usr/lib/; \
+    cd / && rm -rf xb ;\
+    xtrabackup --version && xbcloud --version
+COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+ENTRYPOINT ["sidecar"]

@@ -1,0 +1,11 @@
+apiVersion: v1
+data:
+  s3-access-key: TFZWSk5QTFhDVERYVVNJVVFNSEM=
+  s3-bucket: dGVzdC03MjY=
+  s3-endpoint: czMucGVrM2IucWluZ3N0b3IuY29t
+  s3-secret-key: YzFKV0E3b0VveVhvSUw2eUQzZkllTEFIVG5uZXhuM1N2Nm5NcjBrVA==
+kind: Secret
+metadata:
+  name: sample-backup-secret
+  namespace: default
+type: Opaque
