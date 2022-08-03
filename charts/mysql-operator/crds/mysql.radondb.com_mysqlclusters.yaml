@@ -58,6 +58,14 @@ spec:
           spec:
             description: MysqlClusterSpec defines the desired state of MysqlCluster
             properties:
+              backupSchedule:
+                description: Specify under crontab format interval to take backups
+                  leave it empty to deactivate the backup process Defaults to ""
+                type: string
+              backupScheduleJobsHistoryLimit:
+                default: 6
+                description: If set keeps last BackupScheduleJobsHistoryLimit Backups
+                type: integer
               backupSecretName:
                 description: Represents the name of the secret that contains credentials
                   to connect to the storage provider to store backups.
@@ -126,7 +134,7 @@ spec:
               mysqlOpts:
                 default:
                   database: radondb
-                  initTokuDB: true
+                  initTokuDB: false
                   password: RadonDB@123
                   resources:
                     limits:
@@ -197,15 +205,19 @@ spec:
                     type: object
                   rootHost:
                     default: localhost
-                    description: The root user's host.
+                    description: 'Unchangeable: Use super users instead. The root
+                      user''s host.'
+                    enum:
+                    - localhost
                     type: string
                   rootPassword:
                     default: ""
-                    description: 'Password for the root user, can be empty or 8~32
-                      characters long. Only be a combination of uppercase letters,
-                      lowercase letters, numbers or special characters. Special characters
-                      are supported: @#$%^&*_+-=.'
-                    pattern: ^$|^[A-Za-z0-9@#$%^&*_+\-=]{8,32}$
+                    description: 'Unchangeable: Use super users instead Password for
+                      the root user, can be empty or 8~32 characters long. Only be
+                      a combination of uppercase letters, lowercase letters, numbers
+                      or special characters. Special characters are supported: @#$%^&*_+-=.'
+                    enum:
+                    - ""
                     type: string
                   user:
                     default: radondb_usr
@@ -1256,6 +1268,10 @@ spec:
                 description: Represents the name of the cluster restore from backup
                   path.
                 type: string
+              tlsSecretName:
+                description: Containing CA (ca.crt) and server cert (tls.crt), server
+                  private key (tls.key) for SSL
+                type: string
               xenonOpts:
                 default:
                   admitDefeatHearbeatCount: 5
@@ -1281,6 +1297,11 @@ spec:
                       is millisecond.
                     format: int32
                     type: integer
+                  enableAutoRebuild:
+                    default: false
+                    description: If true, when the data is inconsistent, Xenon will
+                      automatically rebuild the invalid node.
+                    type: boolean
                   image:
                     default: radondb/xenon:1.1.5-alpha
                     description: To specify the image that will be used for xenon

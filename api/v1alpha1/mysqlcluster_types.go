@@ -43,7 +43,7 @@ type MysqlClusterSpec struct {
 
 	// MysqlOpts is the options of MySQL container.
 	// +optional
-	// +kubebuilder:default:={rootPassword: "", rootHost: "localhost", user: "radondb_usr", password: "RadonDB@123", database: "radondb", initTokuDB: true, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
+	// +kubebuilder:default:={rootPassword: "", rootHost: "localhost", user: "radondb_usr", password: "RadonDB@123", database: "radondb", initTokuDB: false, resources: {limits: {cpu: "500m", memory: "1Gi"}, requests: {cpu: "100m", memory: "256Mi"}}}
 	MysqlOpts MysqlOpts `json:"mysqlOpts,omitempty"`
 
 	// XenonOpts is the options of xenon container.
@@ -85,20 +85,38 @@ type MysqlClusterSpec struct {
 	// Represents NFS ip address where cluster restore from.
 	// +optional
 	NFSServerAddress string `json:"nfsServerAddress,omitempty"`
+
+	// Specify under crontab format interval to take backups
+	// leave it empty to deactivate the backup process
+	// Defaults to ""
+	// +optional
+	BackupSchedule string `json:"backupSchedule,omitempty"`
+
+	// If set keeps last BackupScheduleJobsHistoryLimit Backups
+	// +optional
+	// +kubebuilder:default:=6
+	BackupScheduleJobsHistoryLimit *int `json:"backupScheduleJobsHistoryLimit,omitempty"`
+
+	// Containing CA (ca.crt) and server cert (tls.crt), server private key (tls.key) for SSL
+	// +optional
+	TlsSecretName string `json:"tlsSecretName,omitempty"`
 }
 
 // MysqlOpts defines the options of MySQL container.
 type MysqlOpts struct {
+	// Unchangeable: Use super users instead
 	// Password for the root user, can be empty or 8~32 characters long.
 	// Only be a combination of uppercase letters, lowercase letters, numbers or special characters.
 	// Special characters are supported: @#$%^&*_+-=.
 	// +optional
 	// +kubebuilder:default:=""
-	// +kubebuilder:validation:Pattern="^$|^[A-Za-z0-9@#$%^&*_+\\-=]{8,32}$"
+	// +kubebuilder:validation:Enum=""
 	RootPassword string `json:"rootPassword,omitempty"`
 
+	// Unchangeable: Use super users instead.
 	// The root user's host.
 	// +optional
+	// +kubebuilder:validation:Enum=localhost
 	// +kubebuilder:default:="localhost"
 	RootHost string `json:"rootHost,omitempty"`
 
@@ -153,6 +171,11 @@ type XenonOpts struct {
 	// +optional
 	// +kubebuilder:default:=10000
 	ElectionTimeout *int32 `json:"electionTimeout,omitempty"`
+
+	// If true, when the data is inconsistent, Xenon will automatically rebuild the invalid node.
+	// +optional
+	// +kubebuilder:default:=false
+	EnableAutoRebuild bool `json:"enableAutoRebuild,omitempty"`
 
 	// The compute resource requirements.
 	// +optional

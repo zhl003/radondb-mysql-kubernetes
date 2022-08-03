@@ -89,7 +89,7 @@ const (
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "radondb_operator"
 	// The name of the MySQL root user.
-	RootUser = "root"
+	RootUser = "super"
 
 	// xtrabackup http server user
 	BackupUser = "sys_backup"
@@ -139,6 +139,10 @@ const (
 
 	// PluginConfigs is the alias for mysql plugin config.
 	PluginConfigs = "plugin.cnf"
+	// TlsVolumeName  is the volume name for tls
+	TlsVolumeName = "tls"
+	// TlsMountPath is the volume mount path for tls
+	TlsMountPath = "/etc/mysql-ssl"
 )
 
 // ResourceName is the type for aliasing resources that will be created.
@@ -187,7 +191,7 @@ const (
 	Leader    RaftRole = "LEADER"
 	Follower  RaftRole = "FOLLOWER"
 	Candidate RaftRole = "CANDIDATE"
-	Unknown   RaftRole = "UNKNOWN"
+	Unknown   RaftRole = "UNKNOW"
 )
 
 const LableRebuild = "rebuild"

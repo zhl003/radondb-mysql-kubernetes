@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/go-test/deep"
 	"github.com/iancoleman/strcase"
 	"github.com/imdario/mergo"
 	"github.com/presslabs/controller-util/mergo/transformers"
@@ -34,8 +33,11 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -218,7 +220,7 @@ func (s *StatefulSetSyncer) doExpandPVCs(ctx context.Context) error {
 		if err := s.cli.Update(ctx, &item); err != nil {
 			return err
 		}
-		if err := retry(time.Second*2, time.Duration(waitLimit)*time.Second, func() (bool, error) {
+		if err := wait.PollImmediate(time.Second*2, time.Duration(waitLimit)*time.Second, func() (bool, error) {
 			// Check the pvc status.
 			var currentPVC corev1.PersistentVolumeClaim
 			if err2 := s.cli.Get(ctx, client.ObjectKeyFromObject(&item), &currentPVC); err2 != nil {
@@ -269,24 +271,28 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 		}
 	}
 	// Deep copy the old statefulset from StatefulSetSyncer.
-	existing := s.sfs.DeepCopyObject()
+	existing := s.sfs.DeepCopy()
 	// Sync data from mysqlcluster.spec to statefulset.
 	if err = s.mutate(); err != nil {
 		return controllerutil.OperationResultNone, err
 	}
 	// Check if statefulset changed.
-	if equality.Semantic.DeepEqual(existing, s.sfs) {
-		return controllerutil.OperationResultNone, nil
-	}
-	s.log.Info("update statefulset", "name", s.Name, "diff", deep.Equal(existing, s.sfs))
-
-	// If changed, update statefulset.
-	if err := s.cli.Update(ctx, s.sfs); err != nil {
-		return controllerutil.OperationResultNone, err
-	}
-	// Update every pods of statefulset.
-	if err := s.updatePod(ctx); err != nil {
-		return controllerutil.OperationResultNone, err
+	if !s.sfsUpdated(existing) {
+		if s.podsAllUpdated(ctx) {
+			return controllerutil.OperationResultNone, nil
+		} else {
+			if err := s.updatePod(ctx); err != nil {
+				return controllerutil.OperationResultNone, err
+			}
+		}
+	} else {
+		// If changed, update statefulset.
+		if err := s.cli.Update(ctx, s.sfs); err != nil {
+			return controllerutil.OperationResultNone, err
+		}
+		if err := s.updatePod(ctx); err != nil {
+			return controllerutil.OperationResultNone, err
+		}
 	}
 	// Update pvc.
 	if err := s.updatePVC(ctx); err != nil {
@@ -298,10 +304,11 @@ func (s *StatefulSetSyncer) createOrUpdate(ctx context.Context) (controllerutil.
 // updatePod update the pods, update follower nodes first.
 // This can reduce the number of master-slave switching during the update process.
 func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
-	if s.sfs.Status.UpdateRevision == s.sfs.Status.CurrentRevision {
+	// currentRevision will not update with the updatedRevision when using `onDelete`.
+	// https://github.com/kubernetes/kubernetes/pull/106059
+	if s.sfs.Status.UpdatedReplicas == *s.sfs.Spec.Replicas {
 		return nil
 	}
-
 	s.log.Info("statefulSet was changed, run update")
 
 	if s.sfs.Status.ReadyReplicas < s.sfs.Status.Replicas {
@@ -328,7 +335,14 @@ func (s *StatefulSetSyncer) updatePod(ctx context.Context) error {
 	var leaderPod corev1.Pod
 	for _, pod := range pods.Items {
 		// Check if the pod is healthy.
-		if pod.ObjectMeta.Labels["healthy"] != "yes" {
+		err := wait.PollImmediate(time.Second*2, time.Second*30, func() (bool, error) {
+			s.cli.Get(ctx, client.ObjectKeyFromObject(&pod), &pod)
+			if pod.ObjectMeta.Labels["healthy"] == "yes" {
+				return true, nil
+			}
+			return false, nil
+		})
+		if err != nil {
 			return fmt.Errorf("can't start/continue 'update': pod[%s] is unhealthy", pod.Name)
 		}
 		// Skip if pod is leader.
@@ -477,29 +491,39 @@ func (s *StatefulSetSyncer) updatePVC(ctx context.Context) error {
 }
 
 func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) error {
+	if s.sfs.Status.UpdateRevision == "" {
+		return fmt.Errorf("update revision is empty")
+	}
 	// Check version, if not latest, delete node.
 	if pod.ObjectMeta.Labels["controller-revision-hash"] == s.sfs.Status.UpdateRevision {
 		s.log.Info("pod is already updated", "pod name", pod.Name)
 	} else {
 		s.Status.State = apiv1alpha1.ClusterUpdateState
-		s.log.Info("updating pod", "pod", pod.Name, "key", s.Unwrap())
-		if pod.DeletionTimestamp != nil {
-			s.log.Info("pod is being deleted", "pod", pod.Name, "key", s.Unwrap())
-		} else {
-			// If healthy is always `yes`, retry() will exit in advance, which may
-			// cause excessive nodes are deleted at the same time, details: issue#310.
-			pod.ObjectMeta.Labels["healthy"] = "no"
-			if err := s.cli.Update(ctx, pod); err != nil {
-				return err
+		s.log.Info("updating pod", "pod", pod.Name)
+		// Try to delete pod and wait for pod restart.
+		err := wait.PollImmediate(time.Second*5, time.Minute*2, func() (bool, error) {
+			if err := s.cli.Get(ctx, types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, pod); err != nil {
+				return false, nil
 			}
-			if err := s.cli.Delete(ctx, pod); err != nil {
-				return err
+			if pod.DeletionTimestamp != nil {
+				return false, nil
 			}
+			if pod.ObjectMeta.Labels["controller-revision-hash"] != s.sfs.Status.UpdateRevision {
+				if err := s.cli.Delete(ctx, pod); err != nil {
+					return false, err
+				}
+			} else {
+				return true, nil
+			}
+			return false, nil
+		})
+		if err != nil {
+			return err
 		}
 	}
 
 	// Wait the pod restart and healthy.
-	return retry(time.Second*10, time.Duration(waitLimit)*time.Second, func() (bool, error) {
+	return wait.PollImmediate(time.Second*10, time.Duration(waitLimit)*time.Second, func() (bool, error) {
 		err := s.cli.Get(ctx, types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, pod)
 		if err != nil && !k8serrors.IsNotFound(err) {
 			return false, err
@@ -510,7 +534,7 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 			return false, err
 		}
 		if ordinal >= int(*s.Spec.Replicas) {
-			s.log.Info("replicas were changed,  should skip", "pod", pod.Name)
+			s.log.Info("replicas were changed, should skip", "pod", pod.Name)
 			return true, nil
 		}
 
@@ -534,39 +558,6 @@ func (s *StatefulSetSyncer) applyNWait(ctx context.Context, pod *corev1.Pod) err
 	})
 }
 
-// retry runs func "f" every "in" time until "limit" is reached.
-// it also doesn't have an extra tail wait after the limit is reached
-// and f func runs first time instantly
-func retry(in, limit time.Duration, f func() (bool, error)) error {
-	fdone, err := f()
-	if err != nil {
-		return err
-	}
-	if fdone {
-		return nil
-	}
-
-	done := time.NewTimer(limit)
-	defer done.Stop()
-	tk := time.NewTicker(in)
-	defer tk.Stop()
-
-	for {
-		select {
-		case <-done.C:
-			return fmt.Errorf("reach pod wait limit")
-		case <-tk.C:
-			fdone, err := f()
-			if err != nil {
-				return err
-			}
-			if fdone {
-				return nil
-			}
-		}
-	}
-}
-
 func basicEventReason(objKindName string, err error) string {
 	if err != nil {
 		return fmt.Sprintf("%sSyncFailed", strcase.ToCamel(objKindName))
@@ -578,21 +569,56 @@ func basicEventReason(objKindName string, err error) string {
 // check the backup is exist and running
 func (s *StatefulSetSyncer) backupIsRunning(ctx context.Context) (bool, error) {
 	backuplist := apiv1alpha1.BackupList{}
+	labelSet := labels.Set{"cluster": s.Name}
 	if err := s.cli.List(ctx,
 		&backuplist,
 		&client.ListOptions{
-			Namespace: s.sfs.Namespace,
+			Namespace:     s.sfs.Namespace,
+			LabelSelector: labelSet.AsSelector(),
 		},
 	); err != nil {
 		return false, err
 	}
 	for _, bcp := range backuplist.Items {
-		if bcp.ClusterName != s.ClusterName {
-			continue
-		}
 		if !bcp.Status.Completed {
 			return true, nil
 		}
 	}
 	return false, nil
+}
+
+// Updates to statefulset spec for fields other than 'replicas', 'template', and 'updateStrategy' are forbidden.
+func (s *StatefulSetSyncer) sfsUpdated(existing *appsv1.StatefulSet) bool {
+	var resizeVolume = false
+	// TODO: this is a temporary workaround until we figure out a better way to do this.
+	if len(existing.Spec.VolumeClaimTemplates) > 0 && len(s.sfs.Spec.VolumeClaimTemplates) > 0 {
+		resizeVolume = existing.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage().Cmp(*s.sfs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests.Storage()) != 0
+	}
+	return *existing.Spec.Replicas != *s.sfs.Spec.Replicas ||
+		!equality.Semantic.DeepEqual(existing.Spec.Template, s.sfs.Spec.Template) ||
+		existing.Spec.UpdateStrategy != s.sfs.Spec.UpdateStrategy ||
+		resizeVolume
+}
+
+func (s *StatefulSetSyncer) podsAllUpdated(ctx context.Context) bool {
+	podlist := corev1.PodList{}
+	labelSelector := s.GetLabels().AsSelector()
+	// Find the pods that revision is old.
+	r, err := labels.NewRequirement("controller-revision-hash", selection.NotEquals, []string{s.sfs.Status.UpdateRevision})
+	if err != nil {
+		s.log.V(1).Info("failed to create label requirement", "error", err)
+		return false
+	}
+	labelSelector = labelSelector.Add(*r)
+	if err := s.cli.List(ctx,
+		&podlist,
+		&client.ListOptions{
+			Namespace:     s.sfs.Namespace,
+			LabelSelector: labelSelector,
+		},
+	); err != nil {
+		s.log.V(1).Info("failed to list pods", "error", err)
+		return false
+	}
+	return len(podlist.Items) == 0
 }

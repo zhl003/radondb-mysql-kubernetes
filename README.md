@@ -21,9 +21,9 @@
 
 # What is RadonDB MySQL
 
-**RadonDB MySQL** is an open-source, cloud-native, and high-availability cluster solution based on MySQL. It supports the architecture of a primary database and multiple secondary databases, with a full set of management functions for security, automatic backup, monitoring and alarming, and automatic capacity expansion, and so on.
+**RadonDB MySQL** is an open-source, cloud-native, and high-availability cluster solution based on MySQL. It adopts the architecture of one leader node and multiple replicas, with management capabilities for security, automatic backups, monitoring and alerting, automatic scaling, and so on.
 
-**RadonDB MySQL Kubernetes** supports installation, deployment and management of RadonDB MySQL clusters on [Kubernetes](https://kubernetes.io/), [KubeSphere](https://kubesphere.com.cn/) and [Rancher](https://rancher.com), and automates tasks involved in running a RadonDB MySQL cluster.
+**RadonDB MySQL Kubernetes** supports installation, deployment and management of RadonDB MySQL clusters on [Kubernetes](https://kubernetes.io/), [KubeSphere](https://kubesphere.com.cn/) and [Rancher](https://rancher.com), and automates tasks involved in running RadonDB MySQL clusters.
 
 ## Features
 🧠 **High-availability MySQL**: Automatic decentralized leader election, failover within seconds, and strong data consistency in cluster switching
@@ -32,7 +32,7 @@
 
 💻 **Monitoring and alerting**
 
-✍️ [**Backup for S3**](docs/en-us/deploy_backup_restore_s3.md)
+✍️ [**S3 backups**](docs/en-us/backup_and_restoration_s3.md) and [**NFS backups**](docs/en-us/backup_and_restoration_nfs.md)
 
 🎈 **Log management**
 
@@ -71,12 +71,12 @@
 
 ## Steps
 
-### Step 1: Add a Helm repository
+### Step 1: Add a Helm repository.
 
 ```plain
 helm repo add radondb https://radondb.github.io/radondb-mysql-kubernetes/
 ```
-### Step 2: Install Operator
+### Step 2: Install Operator.
 
 Set the release name to `demo` and create a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) named `demo-mysql-operator`.
 
@@ -87,7 +87,7 @@ helm install demo radondb/mysql-operator
 
 > This step also creates the [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) required by the cluster.
 
-### Step 3: Deploy a RadonDB MySQL Cluster
+### Step 3: Deploy a RadonDB MySQL Cluster.
 
 Run the following command to create an instance of the `mysqlclusters.mysql.radondb.com` CRD and thereby create a RadonDB MySQL cluster by using the default parameters. To customize the cluster parameters, see [Configuration Parameters](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/zh-cn/config_para.md).
 
@@ -100,7 +100,7 @@ kubectl apply -f https://github.com/radondb/radondb-mysql-kubernetes/releases/la
 * [Deploy RadonDB MySQL on Kubernetes](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_k8s.md)
 * [Deploy RadonDB MySQL on KubeSphere](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_kubesphere.md)
 * [Deploy RadonDB MySQL on Rancher](https://github.com/radondb/radondb-mysql-kubernetes/blob/main/docs/en-us/deploy_radondb-mysql_operator_on_rancher.md)
-* [All Documents](https://radondb.com/en/docs/mysql/)
+* [All documents](https://radondb.com/en/docs/mysql/)
 
 
 # Who are using RadonDB MySQL

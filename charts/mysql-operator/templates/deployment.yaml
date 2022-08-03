@@ -22,10 +22,15 @@ spec:
       securityContext:
         runAsNonRoot: true
       volumes:
+      {{- if .Values.manager.enableWebhooks }}
       - name: cert
         secret:
           defaultMode: 420
           secretName: "{{ template "webhook.name" . }}-certs"
+      {{- end }}
+      - name: timezone
+        hostPath:
+          path: /etc/localtime
       containers:
       {{- if .Values.rbacProxy.create }}
       - name: kube-rbac-proxy
@@ -42,6 +47,9 @@ spec:
         ports:
         - containerPort: 8443
           name: https
+        volumeMounts:
+        - name: timezone
+          mountPath: /etc/localtime
       {{- end }}
       - name: manager
         ports:
@@ -49,9 +57,13 @@ spec:
           name: webhook-server
           protocol: TCP
         volumeMounts:
+        {{- if .Values.manager.enableWebhooks }}
         - name: cert
           mountPath: /tmp/k8s-webhook-server/serving-certs/
           readOnly: true
+        {{- end }}
+        - name: timezone
+          mountPath: /etc/localtime
         command:
         - /manager
         args:
@@ -67,8 +79,8 @@ spec:
         env:
         - name: IMAGE_PREFIX
           value: {{ .Values.imagePrefix }}
-        - name: ENABLED_WEBHOOKS
-          value: {{ .Values.manager.enabledWebhooks | quote }}
+        - name: ENABLE_WEBHOOKS
+          value: {{ .Values.manager.enableWebhooks | quote }}
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:

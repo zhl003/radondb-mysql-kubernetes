@@ -68,11 +68,55 @@ func TestGetXenonCommand(t *testing.T) {
 }
 
 func TestGetXenonEnvVar(t *testing.T) {
-	assert.Nil(t, xenonCase.Env)
+	assert.Equal(t, []corev1.EnvVar{
+		{
+			Name: "NAMESPACE",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.namespace",
+				},
+			},
+		},
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					APIVersion: "v1",
+					FieldPath:  "metadata.name",
+				},
+			},
+		},
+		{
+			Name:  "AUTO_REBUILD",
+			Value: "false",
+		},
+	}, xenonCase.Env)
 }
 
 func TestGetXenonLifecycle(t *testing.T) {
-	assert.Nil(t, xenonCase.Lifecycle)
+	lifeCycle := &corev1.Lifecycle{
+		PreStop: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/xenonchecker preStop",
+				},
+			},
+		},
+		PostStart: &corev1.Handler{
+			Exec: &corev1.ExecAction{
+				Command: []string{
+					"/bin/bash",
+					"-c",
+					"/xenonchecker postStart",
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, lifeCycle, xenonCase.Lifecycle)
 }
 
 func TestGetXenonResources(t *testing.T) {
@@ -120,7 +164,7 @@ func TestGetXenonReadinessProbe(t *testing.T) {
 			},
 		},
 		InitialDelaySeconds: 10,
-		TimeoutSeconds:      1,
+		TimeoutSeconds:      5,
 		PeriodSeconds:       10,
 		SuccessThreshold:    1,
 		FailureThreshold:    3,

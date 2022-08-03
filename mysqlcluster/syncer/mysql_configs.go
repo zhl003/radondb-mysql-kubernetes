@@ -45,7 +45,7 @@ var mysqlSysConfigs = map[string]string{
 }
 
 var pluginConfigs = map[string]string{
-	"plugin-load": "\"semisync_master.so;semisync_slave.so;audit_log.so;connection_control.so\"",
+	"plugin-load": "\"semisync_master.so;semisync_slave.so;audit_log.so;validate_password.so;connection_control.so\"",
 
 	"rpl_semi_sync_master_enabled":       "OFF",
 	"rpl_semi_sync_slave_enabled":        "ON",
@@ -53,7 +53,7 @@ var pluginConfigs = map[string]string{
 	"rpl_semi_sync_master_timeout":       "1000000000000000000",
 
 	"audit_log_file":             "/var/log/mysql/mysql-audit.log",
-	"audit_log_exclude_accounts": "\"root@localhost,root@127.0.0.1," + utils.ReplicationUser + "@%," + utils.MetricsUser + "@%\"",
+	"audit_log_exclude_accounts": "\"super@localhost,super@127.0.0.1," + utils.ReplicationUser + "@%," + utils.MetricsUser + "@%\"",
 	"audit_log_buffer_size":      "16M",
 	"audit_log_policy":           "NONE",
 	"audit_log_rotate_on_size":   "104857600",
@@ -63,6 +63,13 @@ var pluginConfigs = map[string]string{
 	"connection_control_failed_connections_threshold": "3",
 	"connection_control_min_connection_delay":         "1000",
 	"connection_control_max_connection_delay":         "2147483647",
+
+	"validate_password_policy":             "MEDIUM",
+	"validate_password_length":             "8",
+	"validate_password_mixed_case_count":   "1",
+	"validate_password_number_count":       "1",
+	"validate_password_special_char_count": "1",
+	"validate_password_check_user_name":    "OFF",
 }
 
 var mysql57Configs = map[string]string{
@@ -129,12 +136,15 @@ var mysqlStaticConfigs = map[string]string{
 	"slave_parallel_workers":      "8",
 	"slave_pending_jobs_size_max": "1073741824",
 	"innodb_log_buffer_size":      "16777216",
-	"innodb_log_file_size":        "1073741824",
-	"innodb_log_files_in_group":   "2",
-	"innodb_flush_method":         "O_DIRECT",
-	"innodb_use_native_aio":       "1",
-	"innodb_autoinc_lock_mode":    "2",
-	"performance_schema":          "1",
+	//"innodb_log_file_size":        "1073741824",
+	"innodb_log_files_in_group": "2",
+	"innodb_flush_method":       "O_DIRECT",
+
+	// TODO(cluster): Some machine do not support native aio.
+	//"innodb_use_native_aio": "1",
+
+	"innodb_autoinc_lock_mode": "2",
+	"performance_schema":       "1",
 }
 
 // mysqlTokudbConfigs is the map of the mysql tokudb configs.
@@ -151,4 +161,11 @@ var mysqlBooleanConfigs = []string{
 	"skip-slave-start",
 	"log-slave-updates",
 	"!includedir /etc/mysql/conf.d",
+}
+
+// mysqlSSLConfigs is the ist of the mysql ssl configs.
+var mysqlSSLConfigs = map[string]string{
+	"ssl_ca":   "/etc/mysql-ssl/ca.crt",
+	"ssl_cert": "/etc/mysql-ssl/tls.crt",
+	"ssl_key":  "/etc/mysql-ssl/tls.key",
 }

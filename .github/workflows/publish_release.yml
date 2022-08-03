@@ -10,14 +10,22 @@ on:
 
 jobs: 
   update_release_draft:
+<<<<<<< HEAD
     uses: zhl003/radondb-mysql-kubernetes/.github/workflows/release_drafter.yml@main
+=======
+    uses: ./.github/workflows/release_drafter.yml
+>>>>>>> 59aa9f2e08beee4a7d5ea7be352f03ab3bd57537
     with:
       version: ${{ github.event.inputs.version }}
     secrets:
       git_token: ${{ secrets.GITHUB_TOKEN }}
   
   build_operator:
+<<<<<<< HEAD
     uses: zhl003/radondb-mysql-kubernetes/.github/workflows/build_operator_image.yml@support_arm_platform
+=======
+    uses: ./.github/workflows/build_operator_image.yml
+>>>>>>> 59aa9f2e08beee4a7d5ea7be352f03ab3bd57537
     needs: update_release_draft
     with:
       image_tag: ${{ needs.update_release_draft.outputs.version }}
@@ -26,7 +34,20 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   build_sidecar:
+<<<<<<< HEAD
     uses: zhl003/radondb-mysql-kubernetes/.github/workflows/build_sidecar_image.yml@support_arm_platform
+=======
+    uses: ./.github/workflows/build_sidecar_image.yml
+    needs: update_release_draft
+    with:
+      image_tag: ${{ needs.update_release_draft.outputs.version }} 
+    secrets: 
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+  build_xenon:
+    uses: ./.github/workflows/build_xenon_image.yml
+>>>>>>> 59aa9f2e08beee4a7d5ea7be352f03ab3bd57537
     needs: update_release_draft
     with:
       image_tag: ${{ needs.update_release_draft.outputs.version }} 
@@ -35,8 +56,13 @@ jobs:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
   publish_chart:
+<<<<<<< HEAD
     uses: zhl003/radondb-mysql-kubernetes/.github/workflows/publish_charts.yml@main
+=======
+    uses: ./.github/workflows/publish_charts.yml
+>>>>>>> 59aa9f2e08beee4a7d5ea7be352f03ab3bd57537
     if: ${{ github.event.inputs.version == '' }}
     needs: update_release_draft
     with:
       version: ${{ needs.update_release_draft.outputs.version }}
+      upload_url: ${{ needs.update_release_draft.outputs.upload_url }}

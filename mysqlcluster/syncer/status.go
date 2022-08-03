@@ -153,8 +153,8 @@ func (s *StatusSyncer) Sync(ctx context.Context) (syncer.SyncResult, error) {
 		s.Status.Conditions = s.Status.Conditions[len(s.Status.Conditions)-maxStatusesQuantity:]
 	}
 
-	// Update ready nodes' status.
-	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, readyNodes)
+	// Update all nodes' status.
+	return syncer.SyncResult{}, s.updateNodeStatus(ctx, s.cli, list.Items)
 }
 
 // updateClusterStatus update the cluster status and returns condition.
@@ -232,6 +232,7 @@ func (s *StatusSyncer) AutoRebuild(ctx context.Context, pod *corev1.Pod) error {
 
 // updateNodeStatus update the node status.
 func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, pods []corev1.Pod) error {
+	closeCh := make(chan func())
 	for _, pod := range pods {
 		podName := pod.Name
 		host := fmt.Sprintf("%s.%s.%s", podName, s.GetNameForResource(utils.HeadlessSVC), s.Namespace)
@@ -240,27 +241,47 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		node.Message = ""
 
 		if err := s.updateNodeRaftStatus(node); err != nil {
-			s.log.Error(err, "failed to get/update node raft status", "node", node.Name)
+			s.log.V(1).Info("failed to get/update node raft status", "node", node.Name, "error", err)
 			node.Message = err.Error()
 		}
 
 		isLagged, isReplicating, isReadOnly := corev1.ConditionUnknown, corev1.ConditionUnknown, corev1.ConditionUnknown
-		sqlRunner, closeConn, err := s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
-			s.cli, s.MysqlCluster.GetClusterKey(), utils.OperatorUser, host))
-		defer closeConn()
-		if err != nil {
-			s.log.Error(err, "failed to connect the mysql", "node", node.Name)
-			node.Message = err.Error()
-		} else {
+		var sqlRunner internal.SQLRunner
+		var closeConn func()
+		errCh := make(chan error)
+		go func(sqlRunner *internal.SQLRunner, errCh chan error, closeCh chan func()) {
+			var err error
+			*sqlRunner, closeConn, err = s.SQLRunnerFactory(internal.NewConfigFromClusterKey(
+				s.cli, s.MysqlCluster.GetClusterKey(), host))
+			if err != nil {
+				s.log.V(1).Info("failed to get sql runner", "node", node.Name, "error", err)
+				errCh <- err
+				return
+			}
+			if closeConn != nil {
+				closeCh <- closeConn
+				return
+			}
+			errCh <- nil
+		}(&sqlRunner, errCh, closeCh)
+
+		var err error
+		select {
+		case <-errCh:
+		case closeConn := <-closeCh:
+			defer closeConn()
+		case <-time.After(time.Second * 5):
+		}
+		if sqlRunner != nil {
 			isLagged, isReplicating, err = internal.CheckSlaveStatusWithRetry(sqlRunner, checkNodeStatusRetry)
 			if err != nil {
-				s.log.Error(err, "failed to check slave status", "node", node.Name)
+				s.log.V(1).Info("failed to check slave status", "node", node.Name, "error", err)
 				node.Message = err.Error()
 			}
 
 			isReadOnly, err = internal.CheckReadOnly(sqlRunner)
 			if err != nil {
-				s.log.Error(err, "failed to check read only", "node", node.Name)
+				s.log.V(1).Info("failed to check read only", "node", node.Name, "error", err)
 				node.Message = err.Error()
 			}
 
@@ -281,7 +302,7 @@ func (s *StatusSyncer) updateNodeStatus(ctx context.Context, cli client.Client, 
 		s.updateNodeCondition(node, int(apiv1alpha1.IndexReadOnly), isReadOnly)
 
 		if err = s.updatePodLabel(ctx, &pod, node); err != nil {
-			s.log.Error(err, "failed to update labels", "pod", pod.Name, "namespace", pod.Namespace)
+			s.log.V(1).Info("failed to update labels", "pod", pod.Name, "error", err)
 		}
 	}
 
@@ -413,6 +434,7 @@ func (s *StatusSyncer) addNodesInXenon(host string, toAdd []string) error {
 
 // updatePodLabel update the pod lables.
 func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node *apiv1alpha1.NodeStatus) error {
+	oldPod := pod.DeepCopy()
 	healthy := "no"
 	isPodLabelsUpdated := false
 	if node.Conditions[apiv1alpha1.IndexLagged].Status == corev1.ConditionFalse {
@@ -426,6 +448,10 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 			healthy = "yes"
 		}
 	}
+	if pod.DeletionTimestamp != nil || pod.Status.Phase != corev1.PodRunning {
+		healthy = "no"
+		node.RaftStatus.Role = string(utils.Unknown)
+	}
 
 	if pod.Labels["healthy"] != healthy {
 		pod.Labels["healthy"] = healthy
@@ -436,7 +462,7 @@ func (s *StatusSyncer) updatePodLabel(ctx context.Context, pod *corev1.Pod, node
 		isPodLabelsUpdated = true
 	}
 	if isPodLabelsUpdated {
-		if err := s.cli.Update(ctx, pod); client.IgnoreNotFound(err) != nil {
+		if err := s.cli.Patch(ctx, pod, client.MergeFrom(oldPod)); client.IgnoreNotFound(err) != nil {
 			return err
 		}
 	}

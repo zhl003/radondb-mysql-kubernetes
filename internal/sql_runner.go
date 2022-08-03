@@ -55,7 +55,7 @@ type Config struct {
 }
 
 // NewConfigFromClusterKey returns a new Config based on a MySQLCluster key.
-func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, userName, host string) (*Config, error) {
+func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, host string) (*Config, error) {
 	cluster := &apiv1alpha1.MysqlCluster{}
 	if err := c.Get(context.TODO(), clusterKey, cluster); err != nil {
 		return nil, err
@@ -71,40 +71,22 @@ func NewConfigFromClusterKey(c client.Client, clusterKey client.ObjectKey, userN
 	if host == utils.LeaderHost {
 		host = fmt.Sprintf("%s-leader.%s", cluster.Name, cluster.Namespace)
 	}
-
-	switch userName {
-	case utils.OperatorUser:
-		password, ok := secret.Data["operator-password"]
-		if !ok {
-			return nil, fmt.Errorf("operator-password cannot be empty")
-		}
-		return &Config{
-			User:     utils.OperatorUser,
-			Password: string(password),
-			Host:     host,
-			Port:     utils.MysqlPort,
-		}, nil
-
-	case utils.RootUser:
-		password, ok := secret.Data["internal-root-password"]
-		if !ok {
-			return nil, fmt.Errorf("internal-root-password cannot be empty")
-		}
-		return &Config{
-			User:     utils.RootUser,
-			Password: string(password),
-			Host:     host,
-			Port:     utils.MysqlPort,
-		}, nil
-	default:
-		return nil, fmt.Errorf("MySQL user %s are not supported", userName)
+	password, ok := secret.Data["operator-password"]
+	if !ok {
+		return nil, fmt.Errorf("operator-password cannot be empty")
 	}
 
+	return &Config{
+		User:     utils.OperatorUser,
+		Password: string(password),
+		Host:     host,
+		Port:     utils.MysqlPort,
+	}, nil
 }
 
 // GetMysqlDSN returns a data source name.
 func (c *Config) GetMysqlDSN() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&multiStatements=true&interpolateParams=true",
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&multiStatements=true&interpolateParams=true&tls=skip-verify",
 		c.User, c.Password, c.Host, c.Port,
 	)
 }
@@ -137,6 +119,15 @@ func NewSQLRunner(cfg *Config, errs ...error) (SQLRunner, closeFunc, error) {
 
 	db, err := sql.Open("mysql", cfg.GetMysqlDSN())
 	if err != nil {
+		return nil, close, err
+	}
+	db.SetConnMaxIdleTime(10 * time.Second)
+	db.SetConnMaxLifetime(1 * time.Minute)
+	if err := db.Ping(); err != nil {
+		internalLog.V(1).Info("failed to ping mysql", "error", err)
+		if cErr := db.Close(); cErr != nil {
+			internalLog.Error(cErr, "failed closing the database connection")
+		}
 		return nil, close, err
 	}
 
@@ -325,9 +316,10 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 }
 
 // CreateUserIfNotExists creates a user if it doesn't already exist and it gives it the specified permissions.
-func CreateUserIfNotExists(
-	sqlRunner SQLRunner, user, pass string, hosts []string, permissions []apiv1alpha1.UserPermission,
-) error {
+func CreateUserIfNotExists(sqlRunner SQLRunner, user *apiv1alpha1.MysqlUser, pass string) error {
+	userName := user.Spec.User
+	hosts := user.Spec.Hosts
+	permissions := user.Spec.Permissions
 
 	// Throw error if there are no allowed hosts.
 	if len(hosts) == 0 {
@@ -335,12 +327,12 @@ func CreateUserIfNotExists(
 	}
 
 	queries := []Query{
-		getCreateUserQuery(user, pass, hosts),
-		// todo: getAlterUserQuery.
+		getCreateUserQuery(userName, pass, hosts, user.Spec.TLSOptions),
+		getAlterUserQuery(userName, pass, hosts),
 	}
 
 	if len(permissions) > 0 {
-		queries = append(queries, permissionsToQuery(permissions, user, hosts))
+		queries = append(queries, permissionsToQuery(permissions, userName, hosts, user.Spec.WithGrantOption))
 	}
 
 	query := BuildAtomicQuery(queries...)
@@ -352,10 +344,27 @@ func CreateUserIfNotExists(
 	return nil
 }
 
-func getCreateUserQuery(user, pwd string, allowedHosts []string) Query {
+func getCreateUserQuery(user, pwd string, allowedHosts []string, tlsOption apiv1alpha1.TLSOptions) Query {
 	idsTmpl, idsArgs := getUsersIdentification(user, &pwd, allowedHosts)
+	idsTmpl += getUserTLSRequire(tlsOption)
 
 	return NewQuery(fmt.Sprintf("CREATE USER IF NOT EXISTS%s", idsTmpl), idsArgs...)
+}
+
+func getUserTLSRequire(tlsOption apiv1alpha1.TLSOptions) string {
+	return fmt.Sprintf(" REQUIRE %s", tlsOption.Type)
+}
+
+// Only support changing passwords.
+func getAlterUserQuery(user, pwd string, allowedHosts []string) Query {
+	args := []interface{}{}
+	q := "ALTER USER"
+
+	ids, idsArgs := getUsersIdentification(user, &pwd, allowedHosts)
+	q += ids
+	args = append(args, idsArgs...)
+
+	return NewQuery(q, args...)
 }
 
 func getUsersIdentification(user string, pwd *string, allowedHosts []string) (ids string, args []interface{}) {
@@ -388,7 +397,7 @@ func DropUser(sqlRunner SQLRunner, user, host string) error {
 	return nil
 }
 
-func permissionsToQuery(permissions []apiv1alpha1.UserPermission, user string, allowedHosts []string) Query {
+func permissionsToQuery(permissions []apiv1alpha1.UserPermission, user string, allowedHosts []string, withGrant bool) Query {
 	permQueries := []Query{}
 
 	for _, perm := range permissions {
@@ -407,6 +416,9 @@ func permissionsToQuery(permissions []apiv1alpha1.UserPermission, user string, a
 			idsTmpl, idsArgs := getUsersIdentification(user, nil, allowedHosts)
 
 			query := "GRANT " + strings.Join(escPerms, ", ") + " ON " + schemaTable + " TO" + idsTmpl
+			if withGrant {
+				query += " WITH GRANT OPTION"
+			}
 			args = append(args, idsArgs...)
 
 			permQueries = append(permQueries, NewQuery(query, args...))

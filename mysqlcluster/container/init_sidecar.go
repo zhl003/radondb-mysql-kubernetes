@@ -154,14 +154,13 @@ func (c *initSidecar) getPorts() []corev1.ContainerPort {
 	return nil
 }
 
-// getLivenessProbe get the container livenessProbe.
-func (c *initSidecar) getLivenessProbe() *corev1.Probe {
-	return nil
-}
-
-// getReadinessProbe get the container readinessProbe.
-func (c *initSidecar) getReadinessProbe() *corev1.Probe {
-	return nil
+// getProbeSet get the set of livenessProbe, ReadinessProbe and StartupProbe.
+func (c *initSidecar) getProbeSet() *ProbeSet {
+	return &ProbeSet{
+		LivenessProbe:  nil,
+		ReadinessProbe: nil,
+		StartupProbe:   nil,
+	}
 }
 
 // getVolumeMounts get the container volumeMounts.
@@ -200,7 +199,17 @@ func (c *initSidecar) getVolumeMounts() []corev1.VolumeMount {
 			MountPath: utils.SysLocalTimeZoneMountPath,
 		},
 	}
-
+	if c.Spec.TlsSecretName != "" {
+		volumeMounts = append(volumeMounts,
+			corev1.VolumeMount{
+				Name:      utils.TlsVolumeName + "-sidecar",
+				MountPath: "/tmp/mysql-ssl",
+			}, corev1.VolumeMount{
+				Name:      utils.TlsVolumeName,
+				MountPath: utils.TlsMountPath,
+			},
+		)
+	}
 	if c.Spec.MysqlOpts.InitTokuDB {
 		volumeMounts = append(volumeMounts,
 			corev1.VolumeMount{

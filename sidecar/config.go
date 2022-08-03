@@ -345,7 +345,7 @@ func (cfg *Config) buildXenonConf() []byte {
 		},
 		"mysql": {
 			"admit-defeat-ping-count": 3,
-			"admin": "root",
+			"admin": "super",
 			"ping-timeout": %d,
 			"passwd": "%s",
 			"host": "127.0.0.1",
@@ -362,7 +362,9 @@ func (cfg *Config) buildXenonConf() []byte {
 			"meta-datadir": "%s",
 			"semi-sync-degrade": true,
 			"purge-binlog-disabled": true,
-			"super-idle": false
+			"super-idle": false,
+			"leader-start-command": "/xenonchecker leaderStart",
+			"leader-stop-command": "/xenonchecker leaderStop"
 		}
 	}
 	`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser,
@@ -376,34 +378,36 @@ func (cfg *Config) buildXenonConf() []byte {
 // buildInitSql used to build init.sql. The file run after the mysql init.
 func (cfg *Config) buildInitSql(hasInit bool) []byte {
 	sql := fmt.Sprintf(`SET @@SESSION.SQL_LOG_BIN=0;
+UNINSTALL PLUGIN  validate_password;
+DROP USER IF EXISTS 'root'@'127.0.0.1';
+DROP USER IF EXISTS 'root'@'localhost';
 CREATE DATABASE IF NOT EXISTS %s;
-DROP user IF EXISTS 'root'@'127.0.0.1';
-CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '%s';
-GRANT ALL ON *.* TO 'root'@'127.0.0.1'  with grant option;
-DROP user IF EXISTS 'root'@'%%';
-CREATE USER 'root'@'%%' IDENTIFIED BY '%s';
-GRANT ALL ON *.* TO 'root'@'%%' with grant option;
+DROP user IF EXISTS 'super'@'127.0.0.1';
+CREATE USER 'super'@'127.0.0.1' IDENTIFIED BY '%s';
+GRANT ALL ON *.* TO 'super'@'127.0.0.1' WITH GRANT OPTION;
+
+DROP user IF EXISTS '%s'@'127.0.0.1';
+CREATE USER '%s'@'127.0.0.1' IDENTIFIED BY '%s';
+GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'127.0.0.1';
+
 DROP user IF EXISTS '%s'@'%%';
-CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
-GRANT REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO '%s'@'%%';
+CREATE USER '%s'@'%%' IDENTIFIED BY '%s' REQUIRE SSL;
+GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT, CREATE USER ON *.* TO '%s'@'%%' WITH GRANT OPTION;
+
 DROP user IF EXISTS '%s'@'%%';
-CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
-GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'%%';
-DROP user IF EXISTS '%s'@'%%';
-CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
-GRANT SUPER, PROCESS, RELOAD, CREATE, SELECT ON *.* TO '%s'@'%%';
-DROP user IF EXISTS '%s'@'%%';
-CREATE USER '%s'@'%%' IDENTIFIED BY '%s';
-GRANT ALL ON %s.* TO '%s'@'%%' ;
+CREATE USER '%s'@'%%' IDENTIFIED BY '%s' REQUIRE SSL;
+GRANT ALL ON %s.* TO '%s'@'%%';
+
 FLUSH PRIVILEGES;
+INSTALL PLUGIN validate_password SONAME 'validate_password.so';
 
 `,
 		cfg.Database, //database
 		cfg.RootPassword,
-		cfg.InternalRootPassword,
-		cfg.ReplicationUser,                          //drop user
-		cfg.ReplicationUser, cfg.ReplicationPassword, //create user
-		cfg.ReplicationUser, //grant REPLICATION
+		// cfg.InternalRootPassword,
+		// cfg.ReplicationUser,                          //drop user
+		// cfg.ReplicationUser, cfg.ReplicationPassword, //create user
+		// cfg.ReplicationUser, //grant REPLICATION
 
 		cfg.MetricsUser,                      //drop user MetricsUser
 		cfg.MetricsUser, cfg.MetricsPassword, //create user
@@ -423,29 +427,29 @@ FLUSH PRIVILEGES;
 	return utils.StringToBytes(sql)
 }
 
-// buildClientConfig used to build client.conf.
-func (cfg *Config) buildClientConfig() (*ini.File, error) {
-	conf := ini.Empty()
-	sec := conf.Section("client")
+// // buildClientConfig used to build client.conf.
+// func (cfg *Config) buildClientConfig() (*ini.File, error) {
+// 	conf := ini.Empty()
+// 	sec := conf.Section("client")
 
-	if _, err := sec.NewKey("host", "127.0.0.1"); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("host", "127.0.0.1"); err != nil {
+// 		return nil, err
+// 	}
 
-	if _, err := sec.NewKey("port", fmt.Sprintf("%d", utils.MysqlPort)); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("port", fmt.Sprintf("%d", utils.MysqlPort)); err != nil {
+// 		return nil, err
+// 	}
 
-	if _, err := sec.NewKey("user", cfg.OperatorUser); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("user", cfg.OperatorUser); err != nil {
+// 		return nil, err
+// 	}
 
-	if _, err := sec.NewKey("password", cfg.OperatorPassword); err != nil {
-		return nil, err
-	}
+// 	if _, err := sec.NewKey("password", cfg.OperatorPassword); err != nil {
+// 		return nil, err
+// 	}
 
-	return conf, nil
-}
+// 	return conf, nil
+// }
 
 // // buildLeaderStart build the leader-start.sh.
 // func (cfg *Config) buildLeaderStart() []byte {

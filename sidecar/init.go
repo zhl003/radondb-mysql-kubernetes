@@ -91,6 +91,12 @@ func runCloneAndInit(cfg *Config) error {
 	}
 
 	if len(serviceURL) != 0 {
+		// Check has initialized. If so just return.
+		hasInitialized, _ := checkIfPathExists(path.Join(dataPath, "mysql"))
+		if hasInitialized {
+			log.Info("MySQL data directory existing!")
+			return nil
+		}
 		// backup at first
 		Args := fmt.Sprintf("rm -rf /backup/initbackup;mkdir -p /backup/initbackup;curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/initbackup; exit ${PIPESTATUS[0]}",
 			serviceURL)
@@ -141,27 +147,26 @@ func runInitCommand(cfg *Config) error {
 		return fmt.Errorf("failed to copy my.cnf: %s", err)
 	}
 
+	// SSL settings.
+	if exists, _ := checkIfPathExists(utils.TlsMountPath); exists {
+		buildSSLdata()
+	}
 	buildDefaultXenonMeta(uid, gid)
 
-	// build client.conf.
-	clientConfig, err := cfg.buildClientConfig()
-	if err != nil {
-		return fmt.Errorf("failed to build client.conf: %s", err)
-	}
-	// save client.conf to /etc/mysql.
-	if err := clientConfig.SaveTo(path.Join(clientConfPath)); err != nil {
-		return fmt.Errorf("failed to save client.conf: %s", err)
-	}
+	// // build client.conf.
+	// clientConfig, err := cfg.buildClientConfig()
+	// if err != nil {
+	// 	return fmt.Errorf("failed to build client.conf: %s", err)
+	// }
+	// // save client.conf to /etc/mysql.
+	// if err := clientConfig.SaveTo(path.Join(clientConfPath)); err != nil {
+	// 	return fmt.Errorf("failed to save client.conf: %s", err)
+	// }
 
 	if err = os.Mkdir(extraConfPath, os.FileMode(0755)); err != nil {
 		if !os.IsExist(err) {
 			return fmt.Errorf("error mkdir %s: %s", extraConfPath, err)
 		}
-	}
-
-	// chown -R mysql:mysql /var/lib/mysql.
-	if err = os.Chown(extraConfPath, uid, gid); err != nil {
-		return fmt.Errorf("failed to chown %s: %s", dataPath, err)
 	}
 
 	// Run reset master in init-mysql container.
@@ -249,12 +254,25 @@ func runInitCommand(cfg *Config) error {
 	if err = ioutil.WriteFile(initSqlPath, cfg.buildInitSql(hasInitialized), 0644); err != nil {
 		return fmt.Errorf("failed to write init.sql: %s", err)
 	}
+
+	// Chown -R -h mysql:root /etc/mysql
+	arg := "chown -R -h mysql:root " + mysqlConfigPath
+	cmd := exec.Command("/bin/bash", "-c", "--", arg)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown mysql config path")
+	}
+
+	// Chmod 0600 /etc/mysql/my.cnf
+	if err = os.Chmod(path.Join(mysqlConfigPath, "my.cnf"), os.FileMode(0600)); err != nil {
+		return fmt.Errorf("failed to chmod /etc/mysql/my.cnf: %s", err)
+	}
+
 	// build xenon.json.
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
 	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
-
 	log.Info("init command success")
 	return nil
 }
@@ -312,6 +330,28 @@ func buildDefaultXenonMeta(uid, gid int) error {
 	// chown -R mysql:mysql /var/lib/xenon/peers.json.
 	if err := os.Chown(metaFile, uid, gid); err != nil {
 		return fmt.Errorf("failed to chown %s: %s", metaFile, err)
+	}
+	return nil
+}
+
+func buildSSLdata() error {
+	// cp -rp /tmp/myssl/* /etc/mysql/ssl/ Refer https://stackoverflow.com/questions/31467153/golang-failed-exec-command-that-works-in-terminal
+	shellCmd := "cp  /tmp/mysql-ssl/* " + utils.TlsMountPath
+	cmd := exec.Command("sh", "-c", shellCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to copy ssl: %s", err)
+	}
+	// chown -R mysql:mysql /etc/mysql/ssl
+	cronCmd := "chown -R mysql.mysql " + utils.TlsMountPath
+	cmd = exec.Command("sh", "-c", cronCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chown : %s", err)
+	}
+	// chmod -R 0400 /etc/mysql/ssl/
+	shellCmd = "chmod -R 0400 " + utils.TlsMountPath
+	cmd = exec.Command("sh", "-c", shellCmd)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to chmod : %s", err)
 	}
 	return nil
 }
