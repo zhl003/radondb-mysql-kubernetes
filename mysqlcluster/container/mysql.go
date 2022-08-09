@@ -89,7 +89,7 @@ func (c *mysql) getPorts() []corev1.ContainerPort {
 func (c *mysql) getProbeSet() *ProbeSet {
 	return &ProbeSet{
 		LivenessProbe: &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				Exec: &corev1.ExecAction{
 
 					/* /var/lib/mysql/sleep-forever is used to prevent mysql's container from exiting.
@@ -109,7 +109,7 @@ func (c *mysql) getProbeSet() *ProbeSet {
 			FailureThreshold:    3,
 		},
 		ReadinessProbe: &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				Exec: &corev1.ExecAction{
 					Command: []string{
 						"sh",
@@ -126,7 +126,7 @@ func (c *mysql) getProbeSet() *ProbeSet {
 		},
 		// TODO: Can choose to open/close.
 		StartupProbe: &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				Exec: &corev1.ExecAction{
 					Command: []string{
 						"sh",
