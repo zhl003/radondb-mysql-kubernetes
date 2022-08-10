@@ -78,7 +78,7 @@ func (c *metrics) getPorts() []corev1.ContainerPort {
 func (c *metrics) getProbeSet() *ProbeSet {
 	return &ProbeSet{
 		LivenessProbe: &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: "/",
 					Port: intstr.FromInt(utils.MetricsPort),
@@ -91,7 +91,7 @@ func (c *metrics) getProbeSet() *ProbeSet {
 			FailureThreshold:    3,
 		},
 		ReadinessProbe: &corev1.Probe{
-			Handler: corev1.Handler{
+			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path: "/",
 					Port: intstr.FromInt(utils.MetricsPort),
