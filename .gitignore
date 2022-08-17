@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-
+.devcontainer/
 # Test binary, built with `go test -c`
 *.test
 
@@ -26,12 +26,9 @@ bin/
 
 # e2e logs
 test/e2e/logs_*
-<<<<<<< HEAD
-mysql57/
 =======
 # vscode local
 .devcontainer
 
 # vs debug files
 __debug_*
->>>>>>> 59aa9f2e08beee4a7d5ea7be352f03ab3bd57537

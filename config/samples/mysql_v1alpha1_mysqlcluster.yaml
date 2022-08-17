@@ -38,7 +38,7 @@ spec:
         memory: 1Gi
 
   xenonOpts:
-    image: zhonghl003/xenon:1.1.5-alpha
+    image: dockerhub.kubekey.local/huawei/xenon:v2.2.1
     admitDefeatHearbeatCount: 5
     electionTimeout: 10000
 
@@ -64,7 +64,7 @@ spec:
 
   podPolicy:
     imagePullPolicy: IfNotPresent
-    sidecarImage: sidecar57
+    sidecarImage: dockerhub.kubekey.local/huawei/mysql-sidecar57:v2.2.1
     busyboxImage: busybox:1.32
 
     slowLogTail: false

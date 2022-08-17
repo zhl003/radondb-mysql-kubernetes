@@ -4,7 +4,7 @@ metadata:
   name: sample-backup
 spec:
   # Add fields here
-  image: zhonghl003/mysql57-sidecar:v2.2.1
+  image: dockerhub.kubekey.local/huawei/mysql57-sidecar:v2.2.1
   # hostname if empty, use the leader as hostname
   hostName: sample-mysql-0
   clusterName: sample
