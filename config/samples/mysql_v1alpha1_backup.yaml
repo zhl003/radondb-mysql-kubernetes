@@ -1,11 +1,11 @@
 apiVersion: mysql.radondb.com/v1alpha1
 kind: Backup
 metadata:
-  name: sample-backup
+  name: sample8-backup
 spec:
   # Add fields here
-  image: dockerhub.kubekey.local/huawei/mysql57-sidecar:v2.2.1
+  image: mysql80-sidecar:v2.2.1
   # hostname if empty, use the leader as hostname
-  hostName: sample-mysql-0
-  clusterName: sample
+  hostName: sample8-mysql-0
+  clusterName: sample8
   # nfsServerAddress: ""

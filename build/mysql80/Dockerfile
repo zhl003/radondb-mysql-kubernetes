@@ -67,7 +67,7 @@ RUN set -ex; \
 # allow to change config files
 	chown -R mysql:root /etc/my.cnf /etc/my.cnf.d; \
 	chmod -R ug+rwX /etc/my.cnf /etc/my.cnf.d
-RUN microdnf  --enablerepo='*' --disablerepo='mysql8.0-server-minimal' update -y;mysql --version \
+RUN microdnf  --enablerepo='*'  update -y;mysql --version \
     microdnf clean all;
 VOLUME ["/var/lib/mysql", "/var/log/mysql"]
 
