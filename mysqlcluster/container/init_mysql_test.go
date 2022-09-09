@@ -110,7 +110,7 @@ func TestGetInitMysqlName(t *testing.T) {
 }
 
 func TestGetInitMysqlImage(t *testing.T) {
-	assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "percona/percona-server:5.7.34"), initMysqlCase.Image)
+	assert.Equal(t, fmt.Sprintf("%s%s", mysqlcluster.GetPrefixFromEnv(), "percona-server:5.7.34"), initMysqlCase.Image)
 }
 
 func TestGetInitMysqlCommand(t *testing.T) {

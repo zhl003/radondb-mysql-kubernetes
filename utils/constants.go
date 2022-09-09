@@ -33,9 +33,9 @@ var (
 
 	// MysqlImageVersions is a map of supported mysql version and their image
 	MysqlImageVersions = map[string]string{
-		"5.7.33": "percona/percona-server:5.7.33",
-		"5.7.34": "percona/percona-server:5.7.34",
-		"8.0.25": "percona/percona-server:8.0.25",
+		"5.7.33": "percona-server:5.7.33",
+		"5.7.34": "percona-server:5.7.34",
+		"8.0.25": "percona-server:8.0.25",
 		"0.0.0":  "errimage",
 	}
 
