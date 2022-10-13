@@ -128,6 +128,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "BackupCron")
 		os.Exit(1)
 	}
+	if err = (&controllers.MySQLshReconciler{
+		Client:   mgr.GetClient(),
+		Recorder: mgr.GetEventRecorderFor("controller.MySQLsh"),
+		Owner:    "mysqlsh",
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MySQLsh")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&mysqlv1alpha1.MysqlCluster{}).SetupWebhookWithManager(mgr); err != nil {

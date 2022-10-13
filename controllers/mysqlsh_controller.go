@@ -18,11 +18,11 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/pkg/errors"
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
-	"github.com/radondb/radondb-mysql-kubernetes/backup"
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"go.opentelemetry.io/otel/trace"
 	appsv1 "k8s.io/api/apps/v1"
@@ -43,14 +43,11 @@ const (
 
 // MySQLshReconciler reconciles a Backup object.
 type MySQLshReconciler struct {
-	*mysqlcluster.MysqlCluster
-	*backup.Backup
-	Client      client.Client
-	Owner       client.FieldOwner
-	Recorder    record.EventRecorder
-	IsOpenShift bool
-	Tracer      trace.Tracer
-	PodExec     func(
+	Client   client.Client
+	Owner    client.FieldOwner
+	Recorder record.EventRecorder
+	Tracer   trace.Tracer
+	PodExec  func(
 		namespace, pod, container string,
 		stdin io.Reader, stdout, stderr io.Writer, command ...string,
 	) error
@@ -70,7 +67,7 @@ type MySQLshReconciler struct {
 func (r *MySQLshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// Fetch the cluster instance
 	// create the result that will be updated following a call to each reconciler
-	ctx, span := r.Tracer.Start(ctx, "Reconcile")
+	// ctx, span := r.Tracer.Start(ctx, "Reconcile")
 	log := log.Log.WithName("controllers").WithName("MySQLsh")
 	result := reconcile.Result{}
 
@@ -80,15 +77,15 @@ func (r *MySQLshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		}
 		return err
 	}
-	cluster := &apiv1alpha1.MysqlCluster{}
+	cluster := mysqlcluster.New(&apiv1alpha1.MysqlCluster{})
 	// get the mysqlcluster from the cache
-	if err := r.Client.Get(ctx, req.NamespacedName, cluster); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, cluster.Unwrap()); err != nil {
 		// NotFound cannot be fixed by requeuing so ignore it. During background
 		// deletion, we receive delete events from cluster's dependents after
 		// cluster is deleted.
 		if err = client.IgnoreNotFound(err); err != nil {
 			log.Error(err, "unable to fetch MySQLCluster")
-			span.RecordError(err)
+			// span.RecordError(err)
 		}
 		return result, err
 	}
@@ -102,7 +99,7 @@ func (r *MySQLshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			// NOTE(cbandy): Kubernetes prior to v1.16.10 and v1.17.6 does not track
 			// managed fields on the status subresource: https://issue.k8s.io/88901
 			if err := errors.WithStack(r.Client.Status().Patch(
-				ctx, cluster, client.MergeFrom(before), r.Owner)); err != nil {
+				ctx, cluster.MysqlCluster, client.MergeFrom(before), r.Owner)); err != nil {
 				log.Error(err, "patching cluster status")
 				return result, err
 			}
@@ -118,27 +115,42 @@ func (r *MySQLshReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 func (r *MySQLshReconciler) reconcileMySQLsh(ctx context.Context,
-	mysqlCluster *apiv1alpha1.MysqlCluster) (reconcile.Result, error) {
+	cluster *mysqlcluster.MysqlCluster) (reconcile.Result, error) {
 	log := log.Log.WithName("controllers").WithName("MySQLsh")
-
+	backup := &apiv1alpha1.Backup{}
 	// if nil create the mysqlsh status
-	if mysqlCluster.Status.Repo == nil {
-		mysqlCluster.Status.Repo = &apiv1alpha1.RepoStatus{}
-	}
+	// if mysqlCluster.Status.Repo == nil {
+	cluster.Status.Repo = &apiv1alpha1.RepoStatus{}
+	// }
 	result := reconcile.Result{}
-	var repoHost *appsv1.StatefulSet
-	var repoHostName string
+	repoHostName := cluster.GetName() + "-repo"
+	repoHost := &appsv1.StatefulSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: appsv1.SchemeGroupVersion.String(),
+			Kind:       "StatefulSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      repoHostName,
+			Namespace: cluster.GetNamespace(),
+		},
+		Spec: appsv1.StatefulSetSpec{
+			// Selector: metav1.SetAsLabelSelector(cluster.GetObjectMeta().GetLabels()),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{},
+			},
+		},
+	}
 	// ensure conditions are set before returning as needed by subsequent reconcile functions
 	defer func() {
 		repoHostReady := metav1.Condition{
-			ObservedGeneration: mysqlCluster.GetGeneration(),
+			ObservedGeneration: cluster.GetGeneration(),
 			Type:               ConditionRepoHostReady,
 		}
-		if mysqlCluster.Status.Repo == nil {
+		if cluster.Status.Repo == nil {
 			repoHostReady.Status = metav1.ConditionUnknown
 			repoHostReady.Reason = "RepoHostStatusMissing"
 			repoHostReady.Message = "MySQLsh dedicated repository host status is missing"
-		} else if mysqlCluster.Status.Repo.Ready {
+		} else if cluster.Status.Repo.Ready {
 			repoHostReady.Status = metav1.ConditionTrue
 			repoHostReady.Reason = "RepoHostReady"
 			repoHostReady.Message = "MySQLsh dedicated repository host is ready"
@@ -147,56 +159,43 @@ func (r *MySQLshReconciler) reconcileMySQLsh(ctx context.Context,
 			repoHostReady.Reason = "RepoHostNotReady"
 			repoHostReady.Message = "MySQLsh dedicated repository host is not ready"
 		}
-		meta.SetStatusCondition(&mysqlCluster.Status.Repo.Conditions, repoHostReady)
+		meta.SetStatusCondition(&cluster.Status.Repo.Conditions, repoHostReady)
 	}()
 	var isCreate bool
-	repoHostName = mysqlCluster.GetName() + "-repo"
-	if r.MysqlCluster.Spec.LogicalBackups.Enabled {
+
+	if cluster.Spec.LogicalBackups.Enabled {
 		isCreate = true
 	}
 	if !isCreate {
 		return result, nil
 	}
-
-	repoHost = &appsv1.StatefulSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: appsv1.SchemeGroupVersion.String(),
-			Kind:       "StatefulSet",
+	fmt.Print(cluster.GetSelectorLabels())
+	repoHost.Spec.Selector = metav1.SetAsLabelSelector(cluster.GetSelectorLabels())
+	repoHost.Spec.Template.ObjectMeta.Labels = cluster.GetLabels()
+	repoHost.Spec.Template.Spec.Containers = []corev1.Container{{
+		Name:  "mysqlsh",
+		Image: cluster.Spec.LogicalBackups.Image,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "mysqlsh-repo",
+				MountPath: "/repo",
+			},
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      repoHostName,
-			Namespace: mysqlCluster.GetNamespace(),
-		},
-		Spec: appsv1.StatefulSetSpec{
-			Selector: metav1.SetAsLabelSelector(r.GetSelectorLabels()),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "mysqlsh-repo",
-							Image: "mysql/mysql-shell:8.0",
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "mysqlsh-repo",
-									MountPath: "/repo",
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "mysqlsh-repo",
-							VolumeSource: corev1.VolumeSource{
-								NFS: &corev1.NFSVolumeSource{
-									Server: r.Backup.Spec.NFSServerAddress,
-								},
-							},
-						},
-					},
+	},
+	}
+	repoHost.Spec.Template.Spec.Volumes = []corev1.Volume{
+		{
+			Name: "mysqlsh-repo",
+			VolumeSource: corev1.VolumeSource{
+				NFS: &corev1.NFSVolumeSource{
+					Server: backup.Spec.NFSServerAddress,
 				},
 			},
 		},
+	}
+	// determine if the repoHost already exists
+	if err := r.Client.Get(ctx, cluster.GetClusterKey(), repoHost); err != nil {
+		
 	}
 	if err := r.Client.Create(ctx, repoHost, r.Owner); err != nil {
 		log.Error(err, "unable to create MySQLsh dedicated repository host")

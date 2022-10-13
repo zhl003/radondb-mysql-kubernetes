@@ -102,7 +102,7 @@ type MysqlClusterSpec struct {
 	TlsSecretName string `json:"tlsSecretName,omitempty"`
 
 	// If set, the operator will create a logical repo  for the mysql cluster
-	LogicalBackups MyshBackup `json:"mysh,omitempty"`
+	LogicalBackups MyshBackup `json:"logicalbackup,omitempty"`
 
 	// DataSource is the options of data migration from extenal database.
 	// DataSource *DataSource `json:"datasource,omitempty"`
@@ -470,11 +470,13 @@ type RepoStatus struct {
 }
 
 type MyshBackup struct {
-	Enabled bool     `json:"enabled,omitempty"`
-	Image   string   `json:"image,omitempty"`
-	Jobs    int      `json:"jobs,omitempty"`
-	Volume  *RepoPVC `json:"volume,omitempty"`
-	Resources corev1.ResourceRequirements `json:"resources,omitempty"` 
+	// +kubebuilder:default:=true
+	Enabled bool `json:"enabled,omitempty"`
+	// +kubebuilder:default:="mysql/mysql-shell:8.0"
+	Image     string                      `json:"image,omitempty"`
+	Jobs      int                         `json:"jobs,omitempty"`
+	Volume    *RepoPVC                    `json:"volume,omitempty"`
+	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 type RepoPVC struct {
