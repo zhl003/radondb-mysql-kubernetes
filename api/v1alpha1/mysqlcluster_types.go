@@ -102,6 +102,7 @@ type MysqlClusterSpec struct {
 	TlsSecretName string `json:"tlsSecretName,omitempty"`
 
 	// If set, the operator will create a logical repo  for the mysql cluster
+	// +kubebuilder:default:={enabled: true}
 	LogicalBackups MyshBackup `json:"logicalbackup,omitempty"`
 
 	// DataSource is the options of data migration from extenal database.
@@ -474,7 +475,6 @@ type MyshBackup struct {
 	Enabled bool `json:"enabled,omitempty"`
 	// +kubebuilder:default:="mysql/mysql-shell:8.0"
 	Image     string                      `json:"image,omitempty"`
-	Jobs      int                         `json:"jobs,omitempty"`
 	Volume    *RepoPVC                    `json:"volume,omitempty"`
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
 }

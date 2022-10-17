@@ -70,68 +70,9 @@ spec:
                 description: Represents the name of the secret that contains credentials
                   to connect to the storage provider to store backups.
                 type: string
-              metricsOpts:
+              logicalbackup:
                 default:
-                  enabled: false
-                  image: prom/mysqld-exporter:v0.12.1
-                  resources:
-                    limits:
-                      cpu: 100m
-                      memory: 128Mi
-                    requests:
-                      cpu: 10m
-                      memory: 32Mi
-                description: MetricsOpts is the options of metrics container.
-                properties:
-                  enabled:
-                    default: false
-                    description: Enabled represents if start a metrics container.
-                    type: boolean
-                  image:
-                    default: prom/mysqld-exporter:v0.12.1
-                    description: To specify the image that will be used for metrics
-                      container.
-                    type: string
-                  resources:
-                    default:
-                      limits:
-                        cpu: 100m
-                        memory: 128Mi
-                      requests:
-                        cpu: 10m
-                        memory: 32Mi
-                    description: The compute resource requirements.
-                    properties:
-                      limits:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: 'Limits describes the maximum amount of compute
-                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                        type: object
-                      requests:
-                        additionalProperties:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
-                        description: 'Requests describes the minimum amount of compute
-                          resources required. If Requests is omitted for a container,
-                          it defaults to Limits if that is explicitly specified, otherwise
-                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
-                        type: object
-                    type: object
-                type: object
-              minAvailable:
-                default: 50%
-                description: The number of pods from that set that must still be available
-                  after the eviction, even in the absence of the evicted pod
-                type: string
-              mysh:
+                  enabled: true
                 description: If set, the operator will create a logical repo  for
                   the mysql cluster
                 properties:
@@ -139,9 +80,8 @@ spec:
                     default: true
                     type: boolean
                   image:
+                    default: mysql/mysql-shell:8.0
                     type: string
-                  jobs:
-                    type: integer
                   resources:
                     description: ResourceRequirements describes the compute resource
                       requirements.
@@ -343,6 +283,67 @@ spec:
                     - volumeClaimSpec
                     type: object
                 type: object
+              metricsOpts:
+                default:
+                  enabled: false
+                  image: prom/mysqld-exporter:v0.12.1
+                  resources:
+                    limits:
+                      cpu: 100m
+                      memory: 128Mi
+                    requests:
+                      cpu: 10m
+                      memory: 32Mi
+                description: MetricsOpts is the options of metrics container.
+                properties:
+                  enabled:
+                    default: false
+                    description: Enabled represents if start a metrics container.
+                    type: boolean
+                  image:
+                    default: prom/mysqld-exporter:v0.12.1
+                    description: To specify the image that will be used for metrics
+                      container.
+                    type: string
+                  resources:
+                    default:
+                      limits:
+                        cpu: 100m
+                        memory: 128Mi
+                      requests:
+                        cpu: 10m
+                        memory: 32Mi
+                    description: The compute resource requirements.
+                    properties:
+                      limits:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Limits describes the maximum amount of compute
+                          resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                      requests:
+                        additionalProperties:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        description: 'Requests describes the minimum amount of compute
+                          resources required. If Requests is omitted for a container,
+                          it defaults to Limits if that is explicitly specified, otherwise
+                          to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                        type: object
+                    type: object
+                type: object
+              minAvailable:
+                default: 50%
+                description: The number of pods from that set that must still be available
+                  after the eviction, even in the absence of the evicted pod
+                type: string
               mysqlOpts:
                 default:
                   database: radondb
