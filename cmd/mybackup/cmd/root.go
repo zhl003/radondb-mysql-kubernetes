@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -13,7 +12,6 @@ var commonArgs struct {
 	threads int
 }
 
-var mysqlPassword = os.Getenv("MYSQL_PASSWORD")
 var rootCmd = &cobra.Command{
 	Use:     "mybackup",
 	Version: "v3.0.0",
@@ -21,10 +19,6 @@ var rootCmd = &cobra.Command{
 	Long:    "Backup and restore MySQL data.",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
-
-		if len(mysqlPassword) == 0 {
-			return errors.New("no MYSQL_PASSWORD environment variable")
-		}
 		// mysqlsh command creates some files in $HOME.
 		os.Setenv("HOME", commonArgs.dumpDir)
 		return nil
@@ -39,6 +33,6 @@ func Execute() {
 }
 func init() {
 	pf := rootCmd.PersistentFlags()
-	pf.StringVar(&commonArgs.dumpDir, "work-dir", "/work", "The writable working directory")
+	pf.StringVar(&commonArgs.dumpDir, "dump-dir", "/backup", "The writable working directory")
 	pf.IntVar(&commonArgs.threads, "threads", 4, "The number of threads to be used")
 }

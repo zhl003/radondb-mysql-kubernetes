@@ -1577,6 +1577,60 @@ spec:
           status:
             description: MysqlClusterStatus defines the observed state of MysqlCluster
             properties:
+              backup:
+                description: Backup is the status of the last successful backup.
+                properties:
+                  backupDirUsedSize:
+                    description: BackupDirUsedSize is the usage in bytes of the backup
+                      directory.
+                    format: int64
+                    type: integer
+                  binlogFilename:
+                    description: BinlogFilename is the binlog filename that the backup
+                      source instance was writing to at the backup.
+                    type: string
+                  elapsed:
+                    description: Elapsed is the time spent on the backup.
+                    type: string
+                  gtidSet:
+                    description: GTIDSet is the GTID set of the full dump of database.
+                    type: string
+                  lastBackupSize:
+                    description: LastBackupSize is the usage in bytes of the last
+                      backup.
+                    format: int64
+                    type: integer
+                  sourceIndex:
+                    description: SourcePod is the ordinal of the backup source pod.
+                    type: string
+                  sourceUUID:
+                    description: SourceUUID is the `server_uuid` of the backup source
+                      instance.
+                    type: string
+                  time:
+                    description: The time of the backup.  This is used to generate
+                      object keys of backup files in a bucket.
+                    format: date-time
+                    nullable: true
+                    type: string
+                  warnings:
+                    description: Warnings are list of warnings from the last backup,
+                      if any.
+                    items:
+                      type: string
+                    nullable: true
+                    type: array
+                required:
+                - backupDirUsedSize
+                - binlogFilename
+                - elapsed
+                - gtidSet
+                - lastBackupSize
+                - sourceIndex
+                - sourceUUID
+                - time
+                - warnings
+                type: object
               conditions:
                 description: Conditions contains the list of the cluster conditions
                   fulfilled.

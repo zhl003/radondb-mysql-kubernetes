@@ -333,6 +333,7 @@ func columnValue(scanArgs []interface{}, slaveCols []string, colName string) str
 	return string(*scanArgs[columnIndex].(*sql.RawBytes))
 }
 
+// TODO:  a better way to create the user than using "CREATE USER IF NOT EXISTS"
 // CreateUserIfNotExists creates a user if it doesn't already exist and it gives it the specified permissions.
 func CreateUserIfNotExists(sqlRunner SQLRunner, user *apiv1alpha1.MysqlUser, pass string) error {
 	userName := user.Spec.User

@@ -459,8 +459,42 @@ type MysqlClusterStatus struct {
 	Nodes []NodeStatus `json:"nodes,omitempty"`
 	// Data sync  from external mysql server status.
 	Repo *RepoStatus `json:"mysqlshrepo,omitempty"`
+	// Backup is the status of the last successful backup.
+	// +optional
+	Backup LogicalBackupStatus `json:"backup"`
 }
 
+type LogicalBackupStatus struct {
+	// The time of the backup.  This is used to generate object keys of backup files in a bucket.
+	// +nullable
+	Time metav1.Time `json:"time"`
+
+	// Elapsed is the time spent on the backup.
+	Elapsed metav1.Duration `json:"elapsed"`
+
+	// SourcePod is the ordinal of the backup source pod.
+	SourcePod string `json:"sourceIndex"`
+
+	// SourceUUID is the `server_uuid` of the backup source instance.
+	SourceUUID string `json:"sourceUUID"`
+
+	// BinlogFilename is the binlog filename that the backup source instance was writing to
+	// at the backup.
+	BinlogFilename string `json:"binlogFilename"`
+
+	// GTIDSet is the GTID set of the full dump of database.
+	GTIDSet string `json:"gtidSet"`
+
+	// LastBackupSize is the usage in bytes of the last backup.
+	LastBackupSize int64 `json:"lastBackupSize"`
+
+	// BackupDirUsedSize is the usage in bytes of the backup directory.
+	BackupDirUsedSize int64 `json:"backupDirUsedSize"`
+
+	// Warnings are list of warnings from the last backup, if any.
+	// +nullable
+	Warnings []string `json:"warnings"`
+}
 type RepoStatus struct {
 	// RepoName is the name of the repo.
 	metav1.TypeMeta `json:",inline"`
