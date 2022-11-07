@@ -259,7 +259,7 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 			},
 		},
 		corev1.Volume{
-			Name: utils.MyclientConf,
+			Name: utils.MyClientConf,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: c.GetNameForResource(utils.ClientSecret),
