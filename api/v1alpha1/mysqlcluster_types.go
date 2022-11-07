@@ -110,13 +110,11 @@ type MysqlOpts struct {
 	// Special characters are supported: @#$%^&*_+-=.
 	// +optional
 	// +kubebuilder:default:=""
-	// +kubebuilder:validation:Enum=""
 	RootPassword string `json:"rootPassword,omitempty"`
 
 	// Unchangeable: Use super users instead.
 	// The root user's host.
 	// +optional
-	// +kubebuilder:validation:Enum=localhost
 	// +kubebuilder:default:="localhost"
 	RootHost string `json:"rootHost,omitempty"`
 

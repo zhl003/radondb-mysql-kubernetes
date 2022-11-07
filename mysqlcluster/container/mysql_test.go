@@ -126,7 +126,7 @@ func TestGetMysqlReadinessProbe(t *testing.T) {
 	readinessProbe := &corev1.Probe{
 		ProbeHandler: corev1.ProbeHandler{
 			Exec: &corev1.ExecAction{
-				Command: []string{"sh", "-c", `if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql -uroot -h127.0.0.1 -NB -e "SELECT 1") -eq 1`},
+				Command: []string{"sh", "-c", `if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=/mysql-client-conf/super-client.cnf -NB -e "SELECT 1") -eq 1`},
 			},
 		},
 		InitialDelaySeconds: 10,

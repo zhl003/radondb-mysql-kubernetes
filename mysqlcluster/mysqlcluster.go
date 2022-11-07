@@ -258,6 +258,14 @@ func (c *MysqlCluster) EnsureVolumes() []corev1.Volume {
 				},
 			},
 		},
+		corev1.Volume{
+			Name: utils.MyclientConf,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: c.GetNameForResource(utils.ClientSecret),
+				},
+			},
+		},
 	)
 	// add the nfs volumn mount
 	if len(c.Spec.NFSServerAddress) != 0 {
@@ -341,6 +349,8 @@ func (c *MysqlCluster) GetNameForResource(name utils.ResourceName) string {
 		return fmt.Sprintf("%s-secret", c.Name)
 	case utils.XenonMetaData:
 		return fmt.Sprintf("%s-xenon", c.Name)
+	case utils.ClientSecret:
+		return fmt.Sprintf("%s-client-secret", c.Name)
 	default:
 		return c.Name
 	}

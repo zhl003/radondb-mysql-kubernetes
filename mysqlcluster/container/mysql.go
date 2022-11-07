@@ -114,7 +114,7 @@ func (c *mysql) getProbeSet() *ProbeSet {
 					Command: []string{
 						"sh",
 						"-c",
-						`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql -usuper -h127.0.0.1 -NB -e "SELECT 1") -eq 1`,
+						`if [ -f '/var/lib/mysql/sleep-forever' ] ;then exit 0 ; fi; test $(mysql --defaults-file=/mysql-client-conf/super-client.cnf -NB -e "SELECT 1") -eq 1`,
 					},
 				},
 			},
@@ -131,7 +131,7 @@ func (c *mysql) getProbeSet() *ProbeSet {
 					Command: []string{
 						"sh",
 						"-c",
-						`if test $(mysql -usuper -h127.0.0.1 -NB -e "SELECT 1") -eq 1; then cat /dev/null > /etc/mysql/conf.d/init.sql; fi`,
+						`if test $(mysql -usuper --defaults-file=/mysql-client-conf/super-client.cnf  -NB -e "SELECT 1") -eq 1; then cat /dev/null > /etc/mysql/conf.d/init.sql; fi`,
 					},
 				},
 			},
@@ -162,6 +162,10 @@ func (c *mysql) getVolumeMounts() []corev1.VolumeMount {
 		{
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
+		},
+		{
+			Name:      utils.MyClientConf,
+			MountPath: utils.MyClientConfMountPath,
 		},
 	}
 	if c.Spec.TlsSecretName != "" {

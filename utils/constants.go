@@ -89,8 +89,11 @@ const (
 	// The MySQL user used for operator to connect to the mysql node for configuration.
 	OperatorUser = "radondb_operator"
 	// The name of the MySQL root user.
-	RootUser = "super"
-
+	RootUser              = "super"
+	RootUserPasswordKey   = "internal-root-password"
+	RootUserClientConf    = "super-client.cnf"
+	MyClientConf          = "mysql-client-conf"
+	MyClientConfMountPath = "/mysql-client-conf"
 	// xtrabackup http server user
 	BackupUser = "sys_backup"
 
@@ -163,6 +166,8 @@ const (
 	MetricsService ResourceName = "metrics-service"
 	// Secret is the name of the secret that contains operator related credentials.
 	Secret ResourceName = "secret"
+	// ClientSecret is the name of the secret that contains client related credentials.
+	ClientSecret ResourceName = "client-conf-secret"
 	// Role is the alias of the role resource.
 	Role ResourceName = "role"
 	// RoleBinding is the alias of the rolebinding resource.

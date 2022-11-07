@@ -171,5 +171,9 @@ func (c *xenon) getVolumeMounts() []corev1.VolumeMount {
 			Name:      utils.SysLocalTimeZone,
 			MountPath: utils.SysLocalTimeZoneMountPath,
 		},
+		{
+			Name:      utils.MyClientConf,
+			MountPath: utils.MyClientConfMountPath,
+		},
 	}
 }

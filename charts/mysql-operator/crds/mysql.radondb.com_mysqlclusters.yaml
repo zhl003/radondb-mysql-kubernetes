@@ -207,8 +207,6 @@ spec:
                     default: localhost
                     description: 'Unchangeable: Use super users instead. The root
                       user''s host.'
-                    enum:
-                    - localhost
                     type: string
                   rootPassword:
                     default: ""
@@ -216,8 +214,6 @@ spec:
                       the root user, can be empty or 8~32 characters long. Only be
                       a combination of uppercase letters, lowercase letters, numbers
                       or special characters. Special characters are supported: @#$%^&*_+-=.'
-                    enum:
-                    - ""
                     type: string
                   user:
                     default: radondb_usr

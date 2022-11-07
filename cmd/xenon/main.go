@@ -9,10 +9,12 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-ini/ini"
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/radondb/radondb-mysql-kubernetes/utils"
 	log "github.com/sirupsen/logrus"
@@ -323,13 +325,17 @@ func runCommandLocal(cmd []string) (bytes.Buffer, string, error) {
 	return stdout, stderr.String(), err
 }
 
-func localDSN() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&multiStatements=true&interpolateParams=true",
-		mysqlUser, mysqlPwd, mysqlHost, MysqlPort)
-}
-
 func getLocalMySQLConn() (*sql.DB, error) {
-	db, err := sql.Open("mysql", localDSN())
+	superFilePath := filepath.Join(MyClientConfMountPath, RootUserClientConf)
+	cfg, err := ini.Load(superFilePath)
+	if err != nil {
+		return nil, err
+	}
+	user := cfg.Section("client").Key("user").String()
+	pass := cfg.Section("client").Key("password").String()
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/?timeout=5s&multiStatements=true&interpolateParams=true",
+		user, pass, mysqlHost, MysqlPort)
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}

@@ -255,7 +255,7 @@ func (cfg *Config) XtrabackupArgs() []string {
 		"--stream=xbstream",
 		"--host=127.0.0.1",
 		fmt.Sprintf("--user=%s", utils.RootUser),
-		fmt.Sprintf("--password=%s", cfg.RootPassword),
+		fmt.Sprintf("--password=%s", cfg.InternalRootPassword),
 		fmt.Sprintf("--target-dir=%s", tmpdir),
 	}
 
@@ -369,7 +369,7 @@ func (cfg *Config) buildXenonConf() []byte {
 	}
 	`, hostName, utils.XenonPort, hostName, utils.XenonPeerPort, cfg.ReplicationPassword, cfg.ReplicationUser,
 		cfg.GtidPurged, requestTimeout,
-		pingTimeout, cfg.RootPassword, version, srcSysVars, replicaSysVars, cfg.ElectionTimeout,
+		pingTimeout, cfg.InternalRootPassword, version, srcSysVars, replicaSysVars, cfg.ElectionTimeout,
 		cfg.AdmitDefeatHearbeatCount, heartbeatTimeout, xenonConfigPath)
 
 	return utils.StringToBytes(str)
@@ -403,7 +403,7 @@ INSTALL PLUGIN validate_password SONAME 'validate_password.so';
 
 `,
 		cfg.Database, //database
-		cfg.RootPassword,
+		cfg.InternalRootPassword,
 		// cfg.InternalRootPassword,
 		// cfg.ReplicationUser,                          //drop user
 		// cfg.ReplicationUser, cfg.ReplicationPassword, //create user

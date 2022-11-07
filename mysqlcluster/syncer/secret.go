@@ -17,6 +17,7 @@ limitations under the License.
 package syncer
 
 import (
+	"context"
 	"crypto/rand"
 	"fmt"
 	"io"
@@ -25,6 +26,7 @@ import (
 	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
@@ -90,12 +92,16 @@ func NewSecretSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Int
 			return err
 		}
 
-		if c.Spec.MysqlOpts.RootHost != "localhost" && c.Spec.MysqlOpts.RootPassword == "" {
-			if err := addRandomPassword(secret.Data, "root-password"); err != nil {
-				return err
-			}
-		} else {
-			secret.Data["root-password"] = []byte(c.Spec.MysqlOpts.RootPassword)
+		// if c.Spec.MysqlOpts.RootHost != "localhost" && c.Spec.MysqlOpts.RootPassword == "" {
+		// 	if err := addRandomPassword(secret.Data, "root-password"); err != nil {
+		// 		return err
+		// 	}
+		// } else {
+		// 	secret.Data["root-password"] = []byte(c.Spec.MysqlOpts.RootPassword)
+		// }
+		// for security, specify root password in cr is not allowed
+		if err := addRandomPassword(secret.Data, "root-password"); err != nil {
+			return err
 		}
 
 		secret.Data["mysql-user"] = []byte(c.Spec.MysqlOpts.User)
@@ -158,4 +164,33 @@ func randomCharacter(random io.Reader, class string) func() (byte, error) {
 			return 0, err
 		}
 	}
+}
+
+func NewMyClientConfSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Interface {
+	// first get the main secret
+	clusterSecret := &corev1.Secret{}
+	if err := cli.Get(context.TODO(), types.NamespacedName{
+		Name:      c.GetNameForResource(utils.Secret),
+		Namespace: c.Namespace,
+	}, clusterSecret); err != nil {
+		return nil
+	}
+	password := utils.NewMyclientCnfFromSecret(clusterSecret)
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.GetNameForResource(utils.ClientSecret),
+			Namespace: c.Namespace,
+		},
+	}
+	return syncer.NewObjectSyncer("Secret", c.Unwrap(), secret, cli, func() error {
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
+		}
+		secret.Data = password.ToMyClientCnfSecret().Data
+		return nil
+	})
 }

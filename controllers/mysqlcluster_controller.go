@@ -124,6 +124,11 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
+	clientConfSyncer := clustersyncer.NewMyClientConfSyncer(r.Client, instance)
+	if err = syncer.Sync(ctx, clientConfSyncer, r.Recorder); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	// Todo: modify mysql cm will trigger rolling update but it will not be applied.
 	cmRev := mysqlCMSyncer.Object().(*corev1.ConfigMap).ResourceVersion
 	sctRev := secretSyncer.Object().(*corev1.Secret).ResourceVersion
