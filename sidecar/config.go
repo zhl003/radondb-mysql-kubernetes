@@ -384,8 +384,9 @@ DROP USER IF EXISTS 'root'@'localhost';
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'super'@'127.0.0.1';
 CREATE USER 'super'@'127.0.0.1' IDENTIFIED BY '%s';
+CREATE USER 'super'@'localhost' IDENTIFIED BY '%s';
 GRANT ALL ON *.* TO 'super'@'127.0.0.1' WITH GRANT OPTION;
-
+GRANT ALL ON *.* TO 'super'@'localhost' WITH GRANT OPTION;
 DROP user IF EXISTS '%s'@'127.0.0.1';
 CREATE USER '%s'@'127.0.0.1' IDENTIFIED BY '%s';
 GRANT SELECT, PROCESS, REPLICATION CLIENT ON *.* TO '%s'@'127.0.0.1';
@@ -404,7 +405,7 @@ INSTALL PLUGIN validate_password SONAME 'validate_password.so';
 `,
 		cfg.Database, //database
 		cfg.InternalRootPassword,
-		// cfg.InternalRootPassword,
+		cfg.InternalRootPassword,
 		// cfg.ReplicationUser,                          //drop user
 		// cfg.ReplicationUser, cfg.ReplicationPassword, //create user
 		// cfg.ReplicationUser, //grant REPLICATION
