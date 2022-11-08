@@ -60,7 +60,7 @@ RUN set -ex; \
 
 RUN set -ex; \
     #dnf --setopt=install_weak_deps=False install -y \
-    microdnf -y install --setopt=install_weak_deps=False \
+    microdnf -y install  \
         ${XTRABACKUP_PKG} \
         libev \
         curl \
