@@ -210,13 +210,13 @@ func NewInitConfig() *Config {
 // NewBackupConfig returns the configuration file needed for backup container.
 func NewBackupConfig() *Config {
 	return &Config{
-		NameSpace:    getEnvValue("NAMESPACE"),
-		ServiceName:  getEnvValue("SERVICE_NAME"),
-		ClusterName:  getEnvValue("CLUSTER_NAME"),
-		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
-
-		BackupUser:     getEnvValue("BACKUP_USER"),
-		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+		NameSpace:            getEnvValue("NAMESPACE"),
+		ServiceName:          getEnvValue("SERVICE_NAME"),
+		ClusterName:          getEnvValue("CLUSTER_NAME"),
+		RootPassword:         getEnvValue("MYSQL_ROOT_PASSWORD"),
+		InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
+		BackupUser:           getEnvValue("BACKUP_USER"),
+		BackupPassword:       getEnvValue("BACKUP_PASSWORD"),
 
 		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
 		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
