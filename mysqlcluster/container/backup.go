@@ -61,13 +61,14 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "SERVICE_NAME",
 			Value: c.GetNameForResource(utils.HeadlessSVC),
 		},
-		{
-			Name:  "MYSQL_ROOT_PASSWORD",
-			Value: c.Spec.MysqlOpts.RootPassword,
-		},
+		// {
+		// 	Name:  "MYSQL_ROOT_PASSWORD",
+		// 	Value: c.Spec.MysqlOpts.RootPassword,
+		// },
 		// backup user password for sidecar http server
 		getEnvVarFromSecret(sctName, "BACKUP_USER", "backup-user", true),
 		getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),
+		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "internal-root-password", true),
 	}
 	if len(sctNameBakup) != 0 {
 		envs = append(envs,
