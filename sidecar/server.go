@@ -131,6 +131,7 @@ func (s *server) backupDownLoadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Trailer", backupStatusTrailer)
 
 	// nolint: gosec
+	log.Info(strings.Join(s.cfg.XtrabackupArgs(), " "))
 	xtrabackup := exec.Command(xtrabackupCommand, s.cfg.XtrabackupArgs()...)
 	xtrabackup.Stderr = os.Stderr
 
