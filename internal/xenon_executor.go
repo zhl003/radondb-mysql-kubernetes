@@ -17,11 +17,16 @@ limitations under the License.
 package internal
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	apiv1alpha1 "github.com/radondb/radondb-mysql-kubernetes/api/v1alpha1"
+	"github.com/radondb/radondb-mysql-kubernetes/mysqlcluster"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type xenonExecutor struct {
@@ -31,7 +36,7 @@ type xenonExecutor struct {
 
 type XenonExecutor interface {
 	GetRootPassword() string
-	SetRootPassword(rootPassword string)
+	SetRootPassword(cli client.Client, instance *mysqlcluster.MysqlCluster)
 	RaftStatus(host string) (*apiv1alpha1.RaftStatus, error)
 	XenonPing(host string) error
 	RaftTryToLeader(host string) error
@@ -47,8 +52,21 @@ func (executor *xenonExecutor) GetRootPassword() string {
 	return executor.rootPassword
 }
 
-func (executor *xenonExecutor) SetRootPassword(rootPassword string) {
-	executor.rootPassword = rootPassword
+// func (executor *xenonExecutor) SetRootPassword(rootPassword string) {
+// 	executor.rootPassword = rootPassword
+// }
+
+func (executor *xenonExecutor) SetRootPassword(cli client.Client, c *mysqlcluster.MysqlCluster) {
+	secrets := corev1.Secret{}
+	err := cli.Get(context.TODO(), types.NamespacedName{
+		Namespace: c.Namespace,
+		Name:      c.GetNameForResource(utils.Secret),
+	}, &secrets)
+	if err != nil {
+		return
+	}
+	executor.rootPassword = string(secrets.Data[utils.RootUserPasswordKey])
+
 }
 
 // RaftStatus gets the raft status of incoming host through http.

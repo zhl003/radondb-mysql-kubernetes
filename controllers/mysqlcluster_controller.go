@@ -133,7 +133,7 @@ func (r *MysqlClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	cmRev := mysqlCMSyncer.Object().(*corev1.ConfigMap).ResourceVersion
 	sctRev := secretSyncer.Object().(*corev1.Secret).ResourceVersion
 
-	r.XenonExecutor.SetRootPassword(instance.Spec.MysqlOpts.RootPassword)
+	r.XenonExecutor.SetRootPassword(r.Client, instance)
 
 	// run the syncers for services, pdb and statefulset
 	syncers := []syncer.Interface{

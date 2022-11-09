@@ -94,7 +94,7 @@ func (r *StatusReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 	}()
 
-	r.XenonExecutor.SetRootPassword(instance.Spec.MysqlOpts.RootPassword)
+	r.XenonExecutor.SetRootPassword(r.Client, instance)
 
 	statusSyncer := clustersyncer.NewStatusSyncer(instance, r.Client, r.SQLRunnerFactory, r.XenonExecutor)
 	if err := syncer.Sync(ctx, statusSyncer, r.Recorder); err != nil {
