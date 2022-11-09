@@ -68,7 +68,7 @@ func (c *backupSidecar) getEnvVars() []corev1.EnvVar {
 		// backup user password for sidecar http server
 		getEnvVarFromSecret(sctName, "BACKUP_USER", "backup-user", true),
 		getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),
-		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "internal-root-password", true),
+		getEnvVarFromSecret(sctName, "INTERNAL_ROOT_PASSWORD", "internal-root-password", true),
 	}
 	if len(sctNameBakup) != 0 {
 		envs = append(envs,
