@@ -383,6 +383,7 @@ DROP USER IF EXISTS 'root'@'127.0.0.1';
 DROP USER IF EXISTS 'root'@'localhost';
 CREATE DATABASE IF NOT EXISTS %s;
 DROP user IF EXISTS 'super'@'127.0.0.1';
+DROP user IF EXISTS 'super'@'localhost';
 CREATE USER 'super'@'127.0.0.1' IDENTIFIED BY '%s';
 CREATE USER 'super'@'localhost' IDENTIFIED BY '%s';
 GRANT ALL ON *.* TO 'super'@'127.0.0.1' WITH GRANT OPTION;
