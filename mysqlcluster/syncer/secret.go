@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"math/big"
+	"regexp"
 
 	"github.com/presslabs/controller-util/pkg/syncer"
 	corev1 "k8s.io/api/core/v1"
@@ -115,11 +116,17 @@ func NewSecretSyncer(cli client.Client, c *mysqlcluster.MysqlCluster) syncer.Int
 func addRandomPassword(data map[string][]byte, key string) error {
 	if len(data[key]) == 0 {
 		// NOTE: use only alpha-numeric string, this strings are used unescaped in MySQL queries.
-		random, err := GenerateASCIIPassword(rStrLen)
-		if err != nil {
-			return err
+		random, _ := GenerateASCIIPassword(rStrLen)
+		numOk, _ := regexp.MatchString(".[1|2|3|4|5|6|7|8|9]", random)
+		upOk, _ := regexp.MatchString(".[Z|X|C|V|B|N|M|A|S|D|F|G|H|J|K|L|Q|W|E|R|T|Y|U|I|P]", random)
+		lowOk, _ := regexp.MatchString(".[z|x|c|v|b|n|m|a|s|d|f|g|h|j|k|l|q|w|e|r|t|y|u|i|p]", random)
+		// ()*+,-./` + `:;<=>?@` + `[]^_` + `{|}
+		speOk, _ := regexp.MatchString(".[!|@|#|$|%|^|&|*|(|)|-|_|+|=|{|}|[|]|:|;|'|\"|,|.|<|>|\\?|/]", random)
+		if numOk && upOk && lowOk && speOk {
+			data[key] = []byte(random)
+		} else {
+			return addRandomPassword(data, key)
 		}
-		data[key] = []byte(random)
 	}
 	return nil
 }
