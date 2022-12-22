@@ -316,6 +316,14 @@ func TestEnsureVolumes(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: utils.MyClientConf,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "sample-client-secret",
+				},
+			},
+		},
 	}
 	// when disable Persistence
 	{
@@ -333,7 +341,8 @@ func TestEnsureVolumes(t *testing.T) {
 			},
 		}
 		want = append(want, volume...)
-		assert.Equal(t, want, testCase.EnsureVolumes())
+		actual := testCase.EnsureVolumes()
+		assert.Equal(t, want, actual)
 	}
 	// when enable tokudb
 	{
@@ -354,7 +363,8 @@ func TestEnsureVolumes(t *testing.T) {
 			},
 		}
 		want = append(want, volume...)
-		assert.Equal(t, want, testCase.EnsureVolumes())
+		actual := testCase.EnsureVolumes()
+		assert.Equal(t, want, actual)
 	}
 	// default(Persistence is turned on by default)
 	{
@@ -363,7 +373,8 @@ func TestEnsureVolumes(t *testing.T) {
 		testCase := MysqlCluster{
 			MysqlCluster: &testMysql, log: logf.Log.WithName("mysqlcluster"),
 		}
-		assert.Equal(t, volume, testCase.EnsureVolumes())
+		actual := testCase.EnsureVolumes()
+		assert.Equal(t, volume, actual)
 	}
 }
 

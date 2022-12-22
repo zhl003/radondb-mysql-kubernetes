@@ -190,6 +190,10 @@ func TestGetXenonVolumeMounts(t *testing.T) {
 			Name:      utils.SysLocalTimeZone,
 			MountPath: "/etc/localtime",
 		},
+		{
+			Name:      utils.MyClientConf,
+			MountPath: utils.MyClientConfMountPath,
+		},
 	}
 	assert.Equal(t, volumeMounts, xenonCase.VolumeMounts)
 }

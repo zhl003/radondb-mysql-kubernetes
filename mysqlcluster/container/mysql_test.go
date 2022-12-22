@@ -59,7 +59,7 @@ func TestGetMysqlImage(t *testing.T) {
 
 func TestGetMysqlCommand(t *testing.T) {
 	assert.Equal(t, mysqlCase.Command,
-		[]string{"sh", "-c", "while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; /docker-entrypoint.sh mysqld --safe-user-create --skip-symbolic-links"})
+		[]string{"sh", "-c", "while  [ -f '/var/lib/mysql/sleep-forever' ] ;do sleep 2 ; done; ulimit -s 1048576 && /docker-entrypoint.sh mysqld --safe-user-create --skip-symbolic-links"})
 }
 
 func TestGetMysqlEnvVar(t *testing.T) {
@@ -155,6 +155,10 @@ func TestGetMysqlVolumeMounts(t *testing.T) {
 		{
 			Name:      utils.SysLocalTimeZone,
 			MountPath: "/etc/localtime",
+		},
+		{
+			Name:      utils.MyClientConf,
+			MountPath: utils.MyClientConfMountPath,
 		},
 	}
 	assert.Equal(t, volumeMounts, mysqlCase.VolumeMounts)
