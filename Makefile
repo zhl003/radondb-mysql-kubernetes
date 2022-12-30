@@ -1,9 +1,10 @@
 # Image URL to use all building/pushing image targets
-IMG_PREFIX ?=radondb/
-IMG ?= $(IMG_PREFIX)mysql-operator:latest
-SIDECAR_IMG57 ?= $(IMG_PREFIX)mysql57-sidecar:latest
-SIDECAR_IMG80 ?= $(IMG_PREFIX)mysql80-sidecar:latest
-XENON_IMG ?= $(IMG_PREFIX)xenon:latest
+IMG_PREFIX ?=dockerhub.kubekey.local/huawei/
+IMG_TAG ?=v2.2.4
+IMG ?= $(IMG_PREFIX)mysql-operator:$(IMG_TAG)
+SIDECAR_IMG57 ?= $(IMG_PREFIX)mysql57-sidecar:$(IMG_TAG)
+SIDECAR_IMG80 ?= $(IMG_PREFIX)mysql80-sidecar:$(IMG_TAG)
+XENON_IMG ?= $(IMG_PREFIX)xenon:$(IMG_TAG)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -60,7 +61,7 @@ ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	# source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test $(shell go list ./...|grep -v /test/) -coverprofile cover.out
 
 ##@ Build
 
@@ -80,7 +81,11 @@ docker-push: ## Push docker image with the manager.
 	docker push ${IMG}
 	docker push ${SIDECAR_IMG57} ${SIDECAR_IMG80}
 	docker push ${XENON_IMG}
-
+docker-buildx-huawei: generate fmt vet test## Build docker image with the manager.
+	docker buildx build --platform linux/arm64 -f build/xenon/Dockerfile --build-arg GO_PROXY=on -t ${XENON_IMG} -o type=docker .
+	docker buildx build --platform linux/arm64 -f Dockerfile.sidecar  --build-arg GO_PROXY=on -t ${SIDECAR_IMG57} -o type=docker  .
+	docker buildx build --platform linux/arm64 -f Dockerfile --build-arg GO_PROXY=on -t ${IMG} -o type=docker  .
+	docker buildx build --platform linux/arm64 -f Dockerfile.sidecar  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80 --build-arg GO_PROXY=on -t ${SIDECAR_IMG80} -o type=docker .
 ##@ Deployment
 
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
