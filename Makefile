@@ -15,6 +15,8 @@ XENON_IMG ?= $(IMGPREFIX)xenon:latest
 GO_PORXY ?= off
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+CODE_GENERATOR_VERSION := $(shell awk '/k8s.io\/client-go/ {print substr($$2, 2)}' go.mod)
+
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -58,6 +60,12 @@ update-crd:	## Synchronize the generated YAML files to operator Chart after make
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	$(CONVERSION_GEN) -i ./api/v1alpha1/ -o . -O zz_generated.conversion --go-header-file hack/boilerplate.go.txt
+
+CONVERSION_GEN := $(shell pwd)/bin/conversion-gen
+conversion-gen: ## Donwload conversion-gen locally if necessary.
+	$(call go-get-tool,$(CONVERSION_GEN),k8s.io/code-generator/cmd/conversion-gen@v$(CODE_GENERATOR_VERSION))
+
 
 fmt: ## Run go fmt against code.
 	go fmt ./...
@@ -150,4 +158,3 @@ updateVersion:
 	# sed -i "18s/$(CHART_VERSION)/$(CHART_TOVERSION)/"  charts/mysql-operator/charts/Chart.yaml
 	find ./charts  -type f -name "*.yaml" -exec sed -i  "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
 	find ./config  -type f -name "*.yaml" -exec sed -i  "s/$(CHART_VERSION)/$(CHART_TOVERSION)/g" {} \;
-	
