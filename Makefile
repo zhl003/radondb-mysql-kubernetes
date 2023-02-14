@@ -89,7 +89,7 @@ build: generate fmt vet ## Build manager binary.
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./cmd/manager/main.go
 
-docker-build: test ## Build docker image with the manager.
+docker-build:  ## Build docker image with the manager.
 	docker buildx build --build-arg GO_PROXY=${GO_PORXY} -t ${IMG} .
 	docker buildx build -f Dockerfile.sidecar --build-arg GO_PROXY=${GO_PORXY} -t ${SIDECAR57_IMG} .
 	docker buildx build -f build/xenon/Dockerfile --build-arg GO_PROXY=${GO_PORXY} -t ${XENON_IMG} .
