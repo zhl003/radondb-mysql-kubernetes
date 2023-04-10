@@ -246,7 +246,7 @@ func GetContainerType() string {
 // build Xtrabackup arguments
 func (cfg *Config) XtrabackupArgs() []string {
 	// xtrabackup --backup <args> --target-dir=<backup-dir> <extra-args>
-	tmpdir := "/root/backup/"
+	tmpdir := "/tmp/backup/"
 	if len(cfg.XtrabackupTargetDir) != 0 {
 		tmpdir = cfg.XtrabackupTargetDir
 	}
@@ -473,12 +473,16 @@ INSTALL PLUGIN validate_password SONAME 'validate_password.so';
 // 	return utils.StringToBytes(str)
 // }
 
-/* The function is equivalent to the following shell script template:
+/*
+	The function is equivalent to the following shell script template:
+
 #!/bin/sh
 if [ ! -d {{.DataDir}} ] ; then
-    echo "is not exist the var lib mysql"
-    mkdir {{.DataDir}}
-    chown -R mysql.mysql {{.DataDir}}
+
+	echo "is not exist the var lib mysql"
+	mkdir {{.DataDir}}
+	chown -R mysql.mysql {{.DataDir}}
+
 fi
 mkdir /root/backup
 xbcloud get --storage=S3 \
@@ -663,19 +667,20 @@ func GetXtrabackupGTIDPurged(backuppath string) (string, error) {
 
 /*
 `#!/bin/sh
-	if [ ! -d  {{.DataDir}} ]; then
-        echo "is not exist the var lib mysql"
-        mkdir  {{.DataDir}}
-        chown -R mysql.mysql  {{.DataDir}}
-    fi
-    rm -rf  {{.DataDir}}/*
-    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/backup/{{.XRestoreFrom}}
-    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/backup/{{.XRestoreFrom}}
-    chown -R mysql.mysql /backup/{{.XRestoreFromNFS}}
-    xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/backup/{{.XRestoreFrom}}
-    exit_code=$?
-    chown -R mysql.mysql {{.DataDir}}
-    exit $exit_code
+
+		if [ ! -d  {{.DataDir}} ]; then
+	        echo "is not exist the var lib mysql"
+	        mkdir  {{.DataDir}}
+	        chown -R mysql.mysql  {{.DataDir}}
+	    fi
+	    rm -rf  {{.DataDir}}/*
+	    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --apply-log-only --target-dir=/backup/{{.XRestoreFrom}}
+	    xtrabackup --defaults-file={{.MyCnfMountPath}} --use-memory=3072M --prepare --target-dir=/backup/{{.XRestoreFrom}}
+	    chown -R mysql.mysql /backup/{{.XRestoreFromNFS}}
+	    xtrabackup --defaults-file={{.MyCnfMountPath}} --datadir={{.DataDir}} --copy-back --target-dir=/backup/{{.XRestoreFrom}}
+	    exit_code=$?
+	    chown -R mysql.mysql {{.DataDir}}
+	    exit $exit_code
 */
 func (cfg *Config) ExecuteNFSRestore() error {
 	if len(cfg.XRestoreFromNFS) == 0 {
