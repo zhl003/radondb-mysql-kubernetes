@@ -50,6 +50,7 @@ var (
 
 	// Define MySQL user id and group
 	MySQLUid, MYSQLGid int64 = 1001, 1001
+	RootUid, RootGid   int64 = 0, 0
 )
 
 const (

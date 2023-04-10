@@ -66,12 +66,10 @@ RUN set -ex; \
     curl \
     gnutls \
     wget; 
-RUN microdnf --enablerepo='*' update; \
+RUN set -ex; \
+    microdnf --enablerepo='*' update; \
     microdnf clean all; \
-    rm -rf /var/cache/dnf /var/cache/yum; \
-    useradd -u 1001 -r -g 1001 -s /sbin/nologin \
-    -c "Default Application User" mysql ;\
-    WORKDIR /
-USER mysql
+    rm -rf /var/cache/dnf /var/cache/yum; 
+WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 ENTRYPOINT ["sidecar"]

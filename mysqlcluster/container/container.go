@@ -46,10 +46,19 @@ type ProbeSet struct {
 
 // EnsureContainer ensure a container by the giving name.
 func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container {
-	var ctr container
+	var (
+		ctr            container
+		secrityContext = &corev1.SecurityContext{}
+	)
+
 	switch name {
 	case utils.ContainerInitSidecarName:
 		ctr = &initSidecar{c, name}
+		secrityContext = &corev1.SecurityContext{
+			RunAsUser:  &utils.RootUid,
+			RunAsGroup: &utils.RootGid,
+		}
+
 	case utils.ContainerInitMysqlName:
 		ctr = &initMysql{c, name}
 	case utils.ContainerMysqlName:
@@ -64,6 +73,10 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		ctr = &auditLog{c, name}
 	case utils.ContainerBackupName:
 		ctr = &backupSidecar{c, name}
+		secrityContext = &corev1.SecurityContext{
+			RunAsUser:  &utils.MySQLUid,
+			RunAsGroup: &utils.MYSQLGid,
+		}
 	}
 	probeSet := ctr.getProbeSet()
 
@@ -80,5 +93,5 @@ func EnsureContainer(name string, c *mysqlcluster.MysqlCluster) corev1.Container
 		ReadinessProbe:  probeSet.ReadinessProbe,
 		StartupProbe:    probeSet.StartupProbe,
 		VolumeMounts:    ctr.getVolumeMounts(),
-	}
+		SecurityContext: secrityContext}
 }
