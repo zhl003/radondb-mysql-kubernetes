@@ -47,6 +47,9 @@ var (
 		ClusterAdd:      http.MethodPost,
 		ClusterRemove:   http.MethodPost,
 	}
+
+	// Define MySQL user id and group
+	MySQLUid, MYSQLGid int64 = 1001, 1001
 )
 
 const (

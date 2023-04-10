@@ -447,6 +447,11 @@ func (s *StatefulSetSyncer) ensurePodSpec() corev1.PodSpec {
 		Affinity:           s.Spec.PodPolicy.Affinity,
 		PriorityClassName:  s.Spec.PodPolicy.PriorityClassName,
 		Tolerations:        s.Spec.PodPolicy.Tolerations,
+		SecurityContext: &corev1.PodSecurityContext{
+			RunAsUser:  &utils.MySQLUid,
+			RunAsGroup: &utils.MYSQLGid,
+			FSGroup:    &utils.MYSQLGid,
+		},
 	}
 }
 

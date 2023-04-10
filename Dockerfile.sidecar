@@ -49,7 +49,7 @@ ARG XTRABACKUP_PKG=percona-xtrabackup-24
 #percona-xtrabackup-24-2.4.26
 #percona-xtrabackup-test-80-8.0.28
 RUN set -ex; \
-         { \
+    { \
     echo '[mysql-server-minimal]'; \
     echo 'name=MySQL  Server Minimal'; \
     echo 'enabled=1'; \
@@ -61,14 +61,17 @@ RUN set -ex; \
 RUN set -ex; \
     #dnf --setopt=install_weak_deps=False install -y \
     microdnf -y install  \
-        ${XTRABACKUP_PKG} \
-        libev \
-        curl \
-        gnutls \
-        wget; 
+    ${XTRABACKUP_PKG} \
+    libev \
+    curl \
+    gnutls \
+    wget; 
 RUN microdnf --enablerepo='*' update; \
     microdnf clean all; \
-    rm -rf /var/cache/dnf /var/cache/yum; 
-WORKDIR /
+    rm -rf /var/cache/dnf /var/cache/yum; \
+    useradd -u 1001 -r -g 1001 -s /sbin/nologin \
+    -c "Default Application User" mysql ;\
+    WORKDIR /
+USER mysql
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
 ENTRYPOINT ["sidecar"]
