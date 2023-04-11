@@ -41,7 +41,9 @@ RUN set -ex; \
     mysql;
 
 RUN microdnf -y update; \
-    microdnf -y install glibc-langpack-en
+    microdnf -y install --nodocs --setopt=install_weak_deps=0 glibc-langpack-en \
+    perl-DBD-MySQL 
+
 
 ARG XTRABACKUP_PKG=percona-xtrabackup-24
 
@@ -60,7 +62,7 @@ RUN set -ex; \
 
 RUN set -ex; \
     #dnf --setopt=install_weak_deps=False install -y \
-    microdnf -y install  \
+    microdnf -y install  --nodocs --setopt=install_weak_deps=0 \
     ${XTRABACKUP_PKG} \
     libev \
     curl \
@@ -69,6 +71,7 @@ RUN set -ex; \
 RUN set -ex; \
     microdnf --enablerepo='*' update; \
     microdnf clean all; \
+    rpm -e ca-certificates-2022.2.54-80.2.el8_6.noarch --nodeps; \
     rm -rf /var/cache/dnf /var/cache/yum; 
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
