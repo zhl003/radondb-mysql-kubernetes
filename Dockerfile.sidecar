@@ -72,6 +72,7 @@ RUN set -ex; \
     microdnf --enablerepo='*' update; \
     microdnf clean all; \
     rpm -e ca-certificates-2022.2.54-80.2.el8_6.noarch --nodeps; \
+    rm -rf /etc/pki; \
     rm -rf /var/cache/dnf /var/cache/yum; 
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
