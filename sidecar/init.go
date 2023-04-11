@@ -32,6 +32,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// aes key.
+var key = []byte("xenon-mysql-key-32-bytes")
+
 // NewInitCommand return a pointer to cobra.Command.
 func NewInitCommand(cfg *Config) *cobra.Command {
 	cmd := &cobra.Command{
@@ -270,16 +273,19 @@ func runInitCommand(cfg *Config) error {
 
 	// build xenon.json.
 	xenonFilePath := path.Join(xenonPath, "xenon.json")
-	if err = ioutil.WriteFile(xenonFilePath, cfg.buildXenonConf(), 0644); err != nil {
+
+	// encrypt the xenon.json
+	decryptedData, err := Encrypt(cfg.buildXenonConf(), key)
+	if err != nil {
+		return fmt.Errorf("failed to decrypt xenon.json: %s", err)
+	}
+	if err = ioutil.WriteFile(xenonFilePath, decryptedData, 0600); err != nil {
 		return fmt.Errorf("failed to write xenon.json: %s", err)
 	}
 
 	// chown xenon.json with mysql:mysql and chmod 0600
 	if err = os.Chown(xenonFilePath, 1001, 1001); err != nil {
 		return fmt.Errorf("failed to chown xenon.json: %s", err)
-	}
-	if err = os.Chmod(xenonFilePath, os.FileMode(0600)); err != nil {
-		return fmt.Errorf("failed to chmod xenon.json: %s", err)
 	}
 
 	log.Info("init command success")

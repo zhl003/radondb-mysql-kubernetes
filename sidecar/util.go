@@ -17,11 +17,16 @@ limitations under the License.
 package sidecar
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/base64"
 	"io"
 	"os"
 
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/pkg/errors"
 	"github.com/radondb/radondb-mysql-kubernetes/utils"
 )
 
@@ -126,4 +131,19 @@ func checkIfPathExists(path string) (bool, error) {
 
 	err = f.Close()
 	return true, err
+}
+
+func Encrypt(data []byte, key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	ciphertext := make([]byte, aes.BlockSize+len(data))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	stream := cipher.NewCFBEncrypter(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], data)
+	return []byte(base64.StdEncoding.EncodeToString(ciphertext)), nil
 }

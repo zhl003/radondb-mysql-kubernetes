@@ -4,14 +4,14 @@
 
 FROM golang:1.18.8 as builder
 
-ARG XENON_BRANCH=master
+ARG XENON_BRANCH=encrypt_xenon
 # RUN if [ $(date +%z) = "+0800" ] ; then go env -w GOPROXY=https://goproxy.cn,direct; fi 
 # RUN go env -w GOPROXY=https://goproxy.cn,direct
 RUN go env -w GO111MODULE=off; 
 RUN set -ex; \
     mkdir -p /go/src/github.com/radondb; \
     cd /go/src/github.com/radondb; \
-    git clone --branch $XENON_BRANCH https://github.com/radondb/xenon.git; \
+    git clone --branch $XENON_BRANCH https://github.com/zhl003/xenon.git; \
     cd xenon;  \
     make build 
 WORKDIR /workspace
