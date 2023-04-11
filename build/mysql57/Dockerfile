@@ -88,7 +88,7 @@ RUN microdnf  --enablerepo='*' --disablerepo='mysql5.7-server-minimal' update -y
 VOLUME ["/var/lib/mysql", "/var/log/mysql"]
 
 COPY ps-entry.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+RUN chmod +rx /docker-entrypoint.sh; 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 USER mysql
