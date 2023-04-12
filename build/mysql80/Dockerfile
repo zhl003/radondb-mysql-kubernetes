@@ -71,7 +71,7 @@ RUN microdnf  --enablerepo='*'  update -y;mysql --version \
     microdnf clean all;
 VOLUME ["/var/lib/mysql", "/var/log/mysql"]
 
-COPY ps-entry.sh /docker-entrypoint.sh
+COPY build/mysql80/ps-entry.sh /docker-entrypoint.sh
 RUN chmod +rx /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
 RUN rm -rf /usr/bin/id ;\

@@ -41,11 +41,11 @@ RUN set -ex \
 COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xenon
 COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
 COPY --from=builder /workspace/xenonchecker /xenonchecker
+RUN rm -rf /usr/bin/id
 USER 1001
 WORKDIR /
 EXPOSE 8801
 VOLUME ["/var/lib/xenon", "/etc/xenon"]
-RUN rm -rf /usr/bin/id
 
 ENTRYPOINT ["xenon"]
 CMD ["-c", "/etc/xenon/xenon.json"]
