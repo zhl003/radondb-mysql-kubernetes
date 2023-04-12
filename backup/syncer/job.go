@@ -210,18 +210,18 @@ func (s *jobSyncer) ensurePodSpec(in corev1.PodSpec) corev1.PodSpec {
 			},
 		},
 		// backup password for sidecar http server.
-		{
-			Name: "BACKUP_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "backup-password",
-					Optional: &optTrue,
-				},
-			},
-		},
+		// {
+		// 	Name: "BACKUP_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "backup-password",
+		// 			Optional: &optTrue,
+		// 		},
+		// 	},
+		// },
 		// Cluster Name for set Anotations.
 		{
 			Name:  "JOB_NAME",

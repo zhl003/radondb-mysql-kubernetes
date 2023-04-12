@@ -88,6 +88,11 @@ func runCloneAndInit(cfg *Config) error {
 	if len(serviceURL) == 0 && CheckServiceExist(cfg, "follower") {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "follower", utils.XBackupPort)
 	}
+	credentials, err := utils.GetClusterCredentials(cfg.NameSpace)
+	if err != nil {
+		log.Error(err, "failed to get cluster credentials")
+		return err
+	}
 	//check leader is exist?
 	if len(serviceURL) == 0 && CheckServiceExist(cfg, "leader") {
 		serviceURL = fmt.Sprintf("http://%s-%s:%v", cfg.ClusterName, "leader", utils.XBackupPort)
@@ -101,7 +106,8 @@ func runCloneAndInit(cfg *Config) error {
 			return nil
 		}
 		// backup at first
-		Args := fmt.Sprintf("rm -rf /backup/initbackup;mkdir -p /backup/initbackup;curl --user $BACKUP_USER:$BACKUP_PASSWORD %s/download|xbstream -x -C /backup/initbackup; exit ${PIPESTATUS[0]}",
+		Args := fmt.Sprintf("rm -rf /backup/initbackup;mkdir -p /backup/initbackup;curl --user $BACKUP_USER:%s %s/download|xbstream -x -C /backup/initbackup; exit ${PIPESTATUS[0]}",
+			credentials.BackupPassword,
 			serviceURL)
 		cmd := exec.Command("/bin/bash", "-c", "--", Args)
 		log.Info("runCloneAndInit", "cmd", Args)

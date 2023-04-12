@@ -112,30 +112,30 @@ var (
 			Name:  "CLUSTER_NAME",
 			Value: "sample",
 		},
-		{
-			Name: "MYSQL_ROOT_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "root-password",
-					Optional: &optFalse,
-				},
-			},
-		},
-		{
-			Name: "INTERNAL_ROOT_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "internal-root-password",
-					Optional: &optTrue,
-				},
-			},
-		},
+		// {
+		// 	Name: "MYSQL_ROOT_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "root-password",
+		// 			Optional: &optFalse,
+		// 		},
+		// 	},
+		// },
+		// {
+		// 	Name: "INTERNAL_ROOT_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "internal-root-password",
+		// 			Optional: &optTrue,
+		// 		},
+		// 	},
+		// },
 		{
 			Name: "MYSQL_DATABASE",
 			ValueFrom: &corev1.EnvVarSource{
@@ -160,18 +160,18 @@ var (
 				},
 			},
 		},
-		{
-			Name: "MYSQL_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "mysql-password",
-					Optional: &optTrue,
-				},
-			},
-		},
+		// {
+		// 	Name: "MYSQL_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "mysql-password",
+		// 			Optional: &optTrue,
+		// 		},
+		// 	},
+		// },
 		{
 			Name: "MYSQL_REPL_USER",
 			ValueFrom: &corev1.EnvVarSource{
@@ -184,18 +184,18 @@ var (
 				},
 			},
 		},
-		{
-			Name: "MYSQL_REPL_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "replication-password",
-					Optional: &optTrue,
-				},
-			},
-		},
+		// {
+		// 	Name: "MYSQL_REPL_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "replication-password",
+		// 			Optional: &optTrue,
+		// 		},
+		// 	},
+		// },
 		{
 			Name: "METRICS_USER",
 			ValueFrom: &corev1.EnvVarSource{
@@ -208,18 +208,18 @@ var (
 				},
 			},
 		},
-		{
-			Name: "METRICS_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "metrics-password",
-					Optional: &optTrue,
-				},
-			},
-		},
+		// {
+		// 	Name: "METRICS_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "metrics-password",
+		// 			Optional: &optTrue,
+		// 		},
+		// 	},
+		// },
 		{
 			Name: "OPERATOR_USER",
 			ValueFrom: &corev1.EnvVarSource{
@@ -232,18 +232,18 @@ var (
 				},
 			},
 		},
-		{
-			Name: "OPERATOR_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "operator-password",
-					Optional: &optTrue,
-				},
-			},
-		},
+		// {
+		// 	Name: "OPERATOR_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "operator-password",
+		// 			Optional: &optTrue,
+		// 		},
+		// 	},
+		// },
 		{
 			Name: "BACKUP_USER",
 			ValueFrom: &corev1.EnvVarSource{
@@ -256,19 +256,19 @@ var (
 				},
 			},
 		},
-		{
-			Name: "BACKUP_PASSWORD",
+		// {
+		// 	Name: "BACKUP_PASSWORD",
 
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "backup-password",
-					Optional: &optTrue,
-				},
-			},
-		},
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "backup-password",
+		// 			Optional: &optTrue,
+		// 		},
+		// 	},
+		// },
 	}
 	defaultInitsidecarVolumeMounts = []corev1.VolumeMount{
 		{
@@ -353,58 +353,62 @@ func TestGetInitSidecarEnvVar(t *testing.T) {
 		copy(testBackupEnv, defaultInitSidecarEnvs)
 		testBackupEnv = append(testBackupEnv,
 			corev1.EnvVar{
-				Name: "S3_ENDPOINT",
+				Name:  "BACKUP_SECRET_NAME",
+				Value: "backup-secret",
+			})
+		// 	corev1.EnvVar{
+		// 		Name: "S3_ENDPOINT",
 
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
-						},
-						Key:      "s3-endpoint",
-						Optional: &optFalse,
-					},
-				},
-			},
-			corev1.EnvVar{
-				Name: "S3_ACCESSKEY",
+		// 		ValueFrom: &corev1.EnvVarSource{
+		// 			SecretKeyRef: &corev1.SecretKeySelector{
+		// 				LocalObjectReference: corev1.LocalObjectReference{
+		// 					Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+		// 				},
+		// 				Key:      "s3-endpoint",
+		// 				Optional: &optFalse,
+		// 			},
+		// 		},
+		// 	},
+		// 	corev1.EnvVar{
+		// 		Name: "S3_ACCESSKEY",
 
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
-						},
-						Key:      "s3-access-key",
-						Optional: &optTrue,
-					},
-				},
-			},
-			corev1.EnvVar{
-				Name: "S3_SECRETKEY",
+		// 		ValueFrom: &corev1.EnvVarSource{
+		// 			SecretKeyRef: &corev1.SecretKeySelector{
+		// 				LocalObjectReference: corev1.LocalObjectReference{
+		// 					Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+		// 				},
+		// 				Key:      "s3-access-key",
+		// 				Optional: &optTrue,
+		// 			},
+		// 		},
+		// 	},
+		// 	corev1.EnvVar{
+		// 		Name: "S3_SECRETKEY",
 
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
-						},
-						Key:      "s3-secret-key",
-						Optional: &optTrue,
-					},
-				},
-			},
-			corev1.EnvVar{
-				Name: "S3_BUCKET",
+		// 		ValueFrom: &corev1.EnvVarSource{
+		// 			SecretKeyRef: &corev1.SecretKeySelector{
+		// 				LocalObjectReference: corev1.LocalObjectReference{
+		// 					Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+		// 				},
+		// 				Key:      "s3-secret-key",
+		// 				Optional: &optTrue,
+		// 			},
+		// 		},
+		// 	},
+		// 	corev1.EnvVar{
+		// 		Name: "S3_BUCKET",
 
-				ValueFrom: &corev1.EnvVarSource{
-					SecretKeyRef: &corev1.SecretKeySelector{
-						LocalObjectReference: corev1.LocalObjectReference{
-							Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
-						},
-						Key:      "s3-bucket",
-						Optional: &optTrue,
-					},
-				},
-			},
-		)
+		// 		ValueFrom: &corev1.EnvVarSource{
+		// 			SecretKeyRef: &corev1.SecretKeySelector{
+		// 				LocalObjectReference: corev1.LocalObjectReference{
+		// 					Name: testBackupMysqlClusterWraper.Spec.BackupSecretName,
+		// 				},
+		// 				Key:      "s3-bucket",
+		// 				Optional: &optTrue,
+		// 			},
+		// 		},
+		// 	},
+		// )
 		assert.Equal(t, testBackupEnv, BackupCase.Env)
 	}
 }

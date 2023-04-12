@@ -65,11 +65,11 @@ func (c *initMysql) getEnvVars() []corev1.EnvVar {
 		},
 	}
 
-	sctName := c.GetNameForResource(utils.Secret)
-	envs = append(
-		envs,
-		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
-	)
+	// sctName := c.GetNameForResource(utils.Secret)
+	// envs = append(
+	// 	envs,
+	// 	getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
+	// )
 
 	if c.Spec.MysqlOpts.InitTokuDB {
 		envs = append(envs, corev1.EnvVar{

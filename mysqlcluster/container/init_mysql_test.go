@@ -89,18 +89,18 @@ var (
 			Name:  "MYSQL_INIT_ONLY",
 			Value: "1",
 		},
-		{
-			Name: "MYSQL_ROOT_PASSWORD",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: sctName,
-					},
-					Key:      "root-password",
-					Optional: &optFalse,
-				},
-			},
-		},
+		// {
+		// 	Name: "MYSQL_ROOT_PASSWORD",
+		// 	ValueFrom: &corev1.EnvVarSource{
+		// 		SecretKeyRef: &corev1.SecretKeySelector{
+		// 			LocalObjectReference: corev1.LocalObjectReference{
+		// 				Name: sctName,
+		// 			},
+		// 			Key:      "root-password",
+		// 			Optional: &optFalse,
+		// 		},
+		// 	},
+		// },
 	}
 	initMysqlCase = EnsureContainer("init-mysql", &testInitMysqlCluster)
 )

@@ -45,6 +45,7 @@ USER 1001
 WORKDIR /
 EXPOSE 8801
 VOLUME ["/var/lib/xenon", "/etc/xenon"]
+RUN rm -rf /usr/bin/id
 
 ENTRYPOINT ["xenon"]
 CMD ["-c", "/etc/xenon/xenon.json"]

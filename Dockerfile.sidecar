@@ -76,4 +76,6 @@ RUN set -ex; \
     rm -rf /var/cache/dnf /var/cache/yum; 
 WORKDIR /
 COPY --from=builder /workspace/bin/sidecar /usr/local/bin/sidecar
+RUN rm -rf /usr/bin/id ;\
+    rm -rf /usr/bin/perl; 
 ENTRYPOINT ["sidecar"]

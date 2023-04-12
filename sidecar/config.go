@@ -163,28 +163,41 @@ func NewInitConfig() *Config {
 	}
 
 	existMySQLData, _ := checkIfPathExists(fmt.Sprintf("%s/mysql", dataPath))
-
+	credential, err := utils.GetClusterCredentials(getEnvValue("NAMESPACE"))
+	if err != nil {
+		log.Error(err, "get cluster credentials failed")
+	}
+	backupCredential, err := utils.GetBackupCredentials(getEnvValue("NAMESPACE"))
+	if err != nil {
+		log.Error(err, "get backup credentials failed")
+	}
 	return &Config{
 		HostName:        getEnvValue("POD_HOSTNAME"),
 		NameSpace:       getEnvValue("NAMESPACE"),
 		ServiceName:     getEnvValue("SERVICE_NAME"),
 		StatefulSetName: getEnvValue("STATEFULSET_NAME"),
 
-		RootPassword:         getEnvValue("MYSQL_ROOT_PASSWORD"),
-		InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
+		// RootPassword:         getEnvValue("MYSQL_ROOT_PASSWORD"),
+		RootPassword: credential.MySQLRootPassword,
+		// InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
+		InternalRootPassword: credential.InternalRootPassword,
 
 		Database: getEnvValue("MYSQL_DATABASE"),
 		User:     getEnvValue("MYSQL_USER"),
-		Password: getEnvValue("MYSQL_PASSWORD"),
+		// Password: getEnvValue("MYSQL_PASSWORD"),
+		Password: credential.MysqlPassword,
 
-		ReplicationUser:     getEnvValue("MYSQL_REPL_USER"),
-		ReplicationPassword: getEnvValue("MYSQL_REPL_PASSWORD"),
+		ReplicationUser: getEnvValue("MYSQL_REPL_USER"),
+		// ReplicationPassword: getEnvValue("MYSQL_REPL_PASSWORD"),
+		ReplicationPassword: credential.ReplicationPassword,
 
-		MetricsUser:     getEnvValue("METRICS_USER"),
-		MetricsPassword: getEnvValue("METRICS_PASSWORD"),
+		MetricsUser: getEnvValue("METRICS_USER"),
+		// MetricsPassword: getEnvValue("METRICS_PASSWORD"),
+		MetricsPassword: credential.MetricsPassword,
 
-		OperatorUser:     getEnvValue("OPERATOR_USER"),
-		OperatorPassword: getEnvValue("OPERATOR_PASSWORD"),
+		OperatorUser: getEnvValue("OPERATOR_USER"),
+		// OperatorPassword: getEnvValue("OPERATOR_PASSWORD"),
+		OperatorPassword: credential.OperatorPassword,
 
 		InitTokuDB: initTokuDB,
 
@@ -193,13 +206,17 @@ func NewInitConfig() *Config {
 		AdmitDefeatHearbeatCount: int32(admitDefeatHearbeatCount),
 		ElectionTimeout:          int32(electionTimeout),
 
-		existMySQLData:    existMySQLData,
-		XRestoreFrom:      getEnvValue("RESTORE_FROM"),
-		XRestoreFromNFS:   getEnvValue("RESTORE_FROM_NFS"),
-		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
-		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
-		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
-		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+		existMySQLData:  existMySQLData,
+		XRestoreFrom:    getEnvValue("RESTORE_FROM"),
+		XRestoreFromNFS: getEnvValue("RESTORE_FROM_NFS"),
+		// XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
+		XCloudS3EndPoint: backupCredential.XCloudS3EndPoint,
+		// XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
+		XCloudS3AccessKey: backupCredential.XCloudS3AccessKey,
+		// XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
+		XCloudS3SecretKey: backupCredential.XCloudS3SecretKey,
+		// XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+		XCloudS3Bucket: backupCredential.XCloudS3Bucket,
 
 		ClusterName: getEnvValue("CLUSTER_NAME"),
 		CloneFlag:   false,
@@ -209,30 +226,49 @@ func NewInitConfig() *Config {
 
 // NewBackupConfig returns the configuration file needed for backup container.
 func NewBackupConfig() *Config {
+	credential, err := utils.GetClusterCredentials(getEnvValue("NAMESPACE"))
+	if err != nil {
+		log.Error(err, "get cluster credentials failed")
+	}
+	backupCredential, err := utils.GetBackupCredentials(getEnvValue("NAMESPACE"))
+	if err != nil {
+		log.Error(err, "get backup credentials failed")
+	}
 	return &Config{
-		NameSpace:            getEnvValue("NAMESPACE"),
-		ServiceName:          getEnvValue("SERVICE_NAME"),
-		ClusterName:          getEnvValue("CLUSTER_NAME"),
-		RootPassword:         getEnvValue("MYSQL_ROOT_PASSWORD"),
-		InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
+		NameSpace:    getEnvValue("NAMESPACE"),
+		ServiceName:  getEnvValue("SERVICE_NAME"),
+		ClusterName:  getEnvValue("CLUSTER_NAME"),
+		RootPassword: getEnvValue("MYSQL_ROOT_PASSWORD"),
+		// InternalRootPassword: getEnvValue("INTERNAL_ROOT_PASSWORD"),
+		InternalRootPassword: credential.InternalRootPassword,
 		BackupUser:           getEnvValue("BACKUP_USER"),
-		BackupPassword:       getEnvValue("BACKUP_PASSWORD"),
+		// BackupPassword:       getEnvValue("BACKUP_PASSWORD"),
+		BackupPassword: credential.BackupPassword,
 
-		XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
-		XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
-		XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
-		XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+		// XCloudS3EndPoint:  getEnvValue("S3_ENDPOINT"),
+		XCloudS3EndPoint: backupCredential.XCloudS3EndPoint,
+		// XCloudS3AccessKey: getEnvValue("S3_ACCESSKEY"),
+		XCloudS3AccessKey: backupCredential.XCloudS3AccessKey,
+		// XCloudS3SecretKey: getEnvValue("S3_SECRETKEY"),
+		XCloudS3SecretKey: backupCredential.XCloudS3SecretKey,
+		// XCloudS3Bucket:    getEnvValue("S3_BUCKET"),
+		XCloudS3Bucket: backupCredential.XCloudS3Bucket,
 	}
 }
 
 // NewReqBackupConfig returns the configuration file needed for backup job.
 func NewReqBackupConfig() *Config {
+	credential, err := utils.GetClusterCredentials(getEnvValue("NAMESPACE"))
+	if err != nil {
+		log.Error(err, "get cluster credentials failed")
+	}
 	return &Config{
 		NameSpace:   getEnvValue("NAMESPACE"),
 		ServiceName: getEnvValue("SERVICE_NAME"),
 
-		BackupUser:     getEnvValue("BACKUP_USER"),
-		BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+		BackupUser: getEnvValue("BACKUP_USER"),
+		// BackupPassword: getEnvValue("BACKUP_PASSWORD"),
+		BackupPassword: credential.BackupPassword,
 		JobName:        getEnvValue("JOB_NAME"),
 	}
 }

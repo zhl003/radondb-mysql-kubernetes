@@ -51,7 +51,7 @@ func (c *initSidecar) getCommand() []string {
 // getEnvVars get the container env.
 func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 	sctName := c.GetNameForResource(utils.Secret)
-	sctNamebackup := c.Spec.BackupSecretName
+	// sctNamebackup := c.Spec.BackupSecretName
 	envs := []corev1.EnvVar{
 		{
 			Name:  "CONTAINER_TYPE",
@@ -98,31 +98,39 @@ func (c *initSidecar) getEnvVars() []corev1.EnvVar {
 			Name:  "CLUSTER_NAME",
 			Value: c.Name,
 		},
-		getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
-		getEnvVarFromSecret(sctName, "INTERNAL_ROOT_PASSWORD", "internal-root-password", true),
+		// getEnvVarFromSecret(sctName, "MYSQL_ROOT_PASSWORD", "root-password", false),
+		// getEnvVarFromSecret(sctName, "INTERNAL_ROOT_PASSWORD", "internal-root-password", true),
 		getEnvVarFromSecret(sctName, "MYSQL_DATABASE", "mysql-database", true),
 		getEnvVarFromSecret(sctName, "MYSQL_USER", "mysql-user", true),
-		getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true),
+		// getEnvVarFromSecret(sctName, "MYSQL_PASSWORD", "mysql-password", true),
 		getEnvVarFromSecret(sctName, "MYSQL_REPL_USER", "replication-user", true),
-		getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
+		// getEnvVarFromSecret(sctName, "MYSQL_REPL_PASSWORD", "replication-password", true),
 		getEnvVarFromSecret(sctName, "METRICS_USER", "metrics-user", true),
-		getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
+		// getEnvVarFromSecret(sctName, "METRICS_PASSWORD", "metrics-password", true),
 		getEnvVarFromSecret(sctName, "OPERATOR_USER", "operator-user", true),
-		getEnvVarFromSecret(sctName, "OPERATOR_PASSWORD", "operator-password", true),
+		// getEnvVarFromSecret(sctName, "OPERATOR_PASSWORD", "operator-password", true),
 
 		// backup user password for sidecar http server
 		getEnvVarFromSecret(sctName, "BACKUP_USER", "backup-user", true),
-		getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),
+		// getEnvVarFromSecret(sctName, "BACKUP_PASSWORD", "backup-password", true),
 	}
 
+	// if len(c.Spec.BackupSecretName) != 0 {
+	// 	envs = append(envs,
+	// 		getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
+	// 		getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
+	// 		getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
+	// 		getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
+	// 	)
+	// }
 	if len(c.Spec.BackupSecretName) != 0 {
-		envs = append(envs,
-			getEnvVarFromSecret(sctNamebackup, "S3_ENDPOINT", "s3-endpoint", false),
-			getEnvVarFromSecret(sctNamebackup, "S3_ACCESSKEY", "s3-access-key", true),
-			getEnvVarFromSecret(sctNamebackup, "S3_SECRETKEY", "s3-secret-key", true),
-			getEnvVarFromSecret(sctNamebackup, "S3_BUCKET", "s3-bucket", true),
-		)
+		backupEnv := corev1.EnvVar{
+			Name:  "BACKUP_SECRET_NAME",
+			Value: c.Spec.BackupSecretName,
+		}
+		envs = append(envs, backupEnv)
 	}
+
 	if len(c.Spec.NFSServerAddress) != 0 {
 		envs = append(envs, corev1.EnvVar{
 			Name:  "RESTORE_FROM_NFS",
