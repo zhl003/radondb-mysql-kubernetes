@@ -155,6 +155,9 @@ func GetBackupCredentials(namespace string) (*BackupCredentials, error) {
 	BackupSecretName := getEnvValue("BACKUP_SECRET_NAME")
 	keys := []string{"s3-endpoint", "s3-access-key", "s3-secret-key", "s3-bucket"}
 	credentials := &BackupCredentials{}
+	if BackupSecretName == "NOP" {
+		return credentials, nil
+	}
 
 	clientSet, err := GetClientSet()
 	if err != nil {
