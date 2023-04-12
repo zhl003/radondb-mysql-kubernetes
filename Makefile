@@ -84,7 +84,7 @@ docker-push: ## Push docker image with the manager.
 docker-buildx-huawei: generate fmt vet ## Build docker image with the manager.
 	docker buildx build --platform linux/arm64 -f build/xenon/Dockerfile --build-arg GO_PROXY=on -t ${XENON_IMG} -o type=docker .
 	# docker buildx build --platform linux/arm64 -f Dockerfile.sidecar  --build-arg GO_PROXY=on -t ${SIDECAR_IMG57} -o type=docker  .
-	docker buildx build  --platform linux/arm64 -f build/mysql80/Dockerfile --build-arg GO_PROXY=on -t ${IMG_PREFIX}/percona-server:8.0.25 -o type=docker  .
+	docker buildx build  --platform linux/arm64 -f build/mysql80/Dockerfile --build-arg GO_PROXY=on -t ${IMG_PREFIX}percona-server:8.0.25 -o type=docker  .
 	docker buildx build --platform linux/arm64 -f Dockerfile --build-arg GO_PROXY=on -t ${IMG} -o type=docker  .
 	docker buildx build --platform linux/arm64 -f Dockerfile.sidecar  --build-arg XTRABACKUP_PKG=percona-xtrabackup-80 --build-arg GO_PROXY=on -t ${SIDECAR_IMG80} -o type=docker .
 ##@ Deployment
