@@ -41,7 +41,8 @@ RUN set -ex \
 COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xenon
 COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
 COPY --from=builder /workspace/xenonchecker /xenonchecker
-RUN rm -rf /usr/bin/id
+RUN rm -rf /usr/bin/id;\
+    rm -rf /usr/lib/bash/id;
 USER 1001
 WORKDIR /
 EXPOSE 8801

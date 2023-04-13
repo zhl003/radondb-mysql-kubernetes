@@ -74,8 +74,16 @@ VOLUME ["/var/lib/mysql", "/var/log/mysql"]
 COPY build/mysql80/ps-entry.sh /docker-entrypoint.sh
 RUN chmod +rx /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]
-RUN rm -rf /usr/bin/id ;\
-    rm -rf /usr/bin/perl; 
+RUN rm -rf /usr/bin/id;\
+    rm -rf /usr/bin/make;\
+    rm -rf /usr/bin/perl;\
+    rm -rf /usr/share/cmake/Modules/Compiler/XL-Fortran/cpp;\
+    rm -rf /usr/share/doc/make;\
+    rm -rf /usr/share/gdb;\
+    rm -rf /usr/share/licenses/make;\
+    rm -rf /usr/share/locale/id;\
+    rm -rf /usr/share/perl5/unicore/lib/Perl;\
+    rm -rf /usr/share/X11/xkb/symbols/id;
 
 
 

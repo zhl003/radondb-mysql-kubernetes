@@ -1,6 +1,6 @@
 # Image URL to use all building/pushing image targets
 IMG_PREFIX ?=dockerhub.kubekey.local/huawei/
-IMG_TAG ?=v2.2.6
+IMG_TAG ?=v2.2.7
 IMG ?= $(IMG_PREFIX)mysql-operator:$(IMG_TAG)
 SIDECAR_IMG57 ?= $(IMG_PREFIX)mysql57-sidecar:$(IMG_TAG)
 SIDECAR_IMG80 ?= $(IMG_PREFIX)mysql80-sidecar:$(IMG_TAG)
