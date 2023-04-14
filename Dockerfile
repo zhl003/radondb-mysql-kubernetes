@@ -32,5 +32,8 @@ FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532
-
+RUN rm -rf /etc/nsswitch.conf;\
+    rm -rf /etc/host.conf;
+FROM scratch
+COPY --from=base / /
 ENTRYPOINT ["/manager"]
