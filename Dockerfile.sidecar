@@ -80,5 +80,31 @@ RUN rm -rf /usr/bin/id;\
     rm -rf /usr/bin/perl;\
     rm -rf /usr/share/gdb;\
     rm -rf /usr/share/locale/id;\
-    rm -rf /usr/share/perl5/unicore/lib/Perl; 
+    rm -rf /usr/share/perl5/unicore/lib/Perl; \
+    rm -rf /etc/gcrypt/random.conf;\
+    rm -rf /usr/share/pki/ca-trust-legacy/ca-bundle.legacy.disable.crt;\
+    rm -rf /usr/share/pki/ca-trust-legacy/ca-bundle.legacy.default.crt;\
+    rm -rf /usr/share/doc/gnupg2/examples/gpgconf.conf;\
+    rm -rf /usr/share/gnupg/sks-keyservers.netCA.pem;\
+    rm -rf /usr/lib/tmpfiles.d/libselinux.conf;\
+    rm -rf /usr/lib/tmpfiles.d/rpm.conf;\
+    rm -rf /etc/pki/ca-trust/ca-legacy.conf;\
+    rm -rf /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem;\
+    rm -rf /etc/pki/ca-trust/extracted/pem/objsign-ca-bundle.pem;\
+    rm -rf /etc/pki/ca-trust/extracted/pem/email-ca-bundle.pem;\
+    rm -rf /etc/pki/tls/cert.pem;\
+    rm -rf /etc/krb5.conf;\
+    rm -rf /etc/xattr.conf;\
+    rm -rf /etc/ld.so.conf;\
+    rm -rf /etc/nsswitch.conf;\
+    rm -rf /etc/host.conf;\
+    rm -rf /etc/libaudit.conf;\
+    rm -rf /etc/gcrypt/random.conf;\
+    rm -rf /etc/selinux/semanage.conf;\
+    rm -rf /etc/dnf/protected.d/setup.conf;\
+    rm -rf /etc/openldap/ldap.conf;
+
+
+FROM scratch
+COPY --from=base / /
 ENTRYPOINT ["sidecar"]

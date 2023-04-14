@@ -42,11 +42,26 @@ COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenon /usr/local/bin/xe
 COPY --from=builder /go/src/github.com/radondb/xenon/bin/xenoncli /usr/local/bin/xenoncli
 COPY --from=builder /workspace/xenonchecker /xenonchecker
 RUN rm -rf /usr/bin/id;\
-    rm -rf /usr/lib/bash/id;
+    rm -rf /usr/lib/bash/id;\
+    rm -rf /usr/share/ca-certificates;\
+    rm -rf /etc/ssl/certs;\
+    rm -rf /etc/ca-certificates.conf;\
+    rm -rf /lib/sysctl.d/00-alpine.conf;\
+    rm -rf /etc/sysctl.conf;\
+    rm -rf /etc/ssl1.1/cert.pem;\
+    rm -rf /etc/modprobe.d/blacklist.conf;\
+    rm -rf /etc/modprobe.d/i386.conf;\
+    rm -rf /etc/modprobe.d/kms.conf;\
+    rm -rf /etc/modprobe.d/aliases.conf;\
+    rm -rf /etc/ssl/cert.pem;\
+    rm -rf /etc/udhcpd.conf;
+
+
 USER 1001
 WORKDIR /
 EXPOSE 8801
 VOLUME ["/var/lib/xenon", "/etc/xenon"]
-
+FROM scratch
+COPY --from=base / /
 ENTRYPOINT ["xenon"]
 CMD ["-c", "/etc/xenon/xenon.json"]
