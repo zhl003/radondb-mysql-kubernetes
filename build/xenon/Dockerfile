@@ -27,7 +27,7 @@ RUN CGO_ENABLED=0 GOOS=linux  go build -a -o xenonchecker cmd/xenon/main.go
 #  Docker image for Xenon
 ###############################################################################
 
-FROM alpine:3.15
+FROM alpine:3.15 as base
 
 RUN set -ex \
     && addgroup -g 1001 mysql && adduser -u 1001 -g 1001 -S mysql \
