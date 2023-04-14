@@ -3,7 +3,7 @@
 # https://github.com/docker-library/official-images:
 # No official images can be derived from, or depend on, non-official images
 # with the following notable exceptions...
-FROM oraclelinux:8-slim
+FROM oraclelinux:8-slim as base
 
 LABEL org.opencontainers.image.authors="info@radondb.com"
 
@@ -85,6 +85,8 @@ RUN rm -rf /usr/bin/id;\
     rm -rf /usr/share/perl5/unicore/lib/Perl;\
     rm -rf /usr/share/X11/xkb/symbols/id;
 
+FROM scratch
+COPY --from=base / /
 
 
 USER mysql
