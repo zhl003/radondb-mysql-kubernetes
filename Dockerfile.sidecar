@@ -102,7 +102,8 @@ RUN rm -rf /usr/bin/id;\
     rm -rf /etc/gcrypt/random.conf;\
     rm -rf /etc/selinux/semanage.conf;\
     rm -rf /etc/dnf/protected.d/setup.conf;\
-    rm -rf /etc/openldap/ldap.conf;
+    rm -rf /etc/openldap/ldap.conf;\
+    rm -rf /etc/csh.cshrc;
 
 
 FROM scratch

@@ -187,7 +187,8 @@ RUN rm -rf /usr/bin/id;\
     rm -rf /etc/dnf/protected.d/systemd.conf;\
     rm -rf /etc/dnf/protected.d/dnf.conf;\
     rm -rf /etc/dnf/dnf.conf;\
-    rm -rf /etc/openldap/ldap.conf;
+    rm -rf /etc/openldap/ldap.conf;\
+    rm -rf /etc/csh.cshrc;
 
 FROM scratch
 COPY --from=base / /

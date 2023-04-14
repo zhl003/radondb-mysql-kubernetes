@@ -26,14 +26,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -a -o manager cmd/manager/mai
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot as base
+FROM dockerhub.kubekey.local/huawei/alpine:edg
 # If you make a image manually, the cn environment may not be able to access .io, you can switch to the following path
 # FROM radondb/distroless:nonroot
 WORKDIR /
 COPY --from=builder /workspace/manager .
 USER 65532:65532
-RUN rm -rf /etc/nsswitch.conf;\
-    rm -rf /etc/host.conf;
-FROM scratch
-COPY --from=base / /
 ENTRYPOINT ["/manager"]
