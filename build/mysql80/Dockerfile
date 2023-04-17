@@ -12,7 +12,6 @@ RUN set -ex; \
     # shadow-utils are needed for user/group manipulation on UBI-based images
     microdnf -y update; \
     microdnf -y install glibc-langpack-en \
-    nss_wrapper \
     epel-release \
     findutils \
     shadow-utils; \
